@@ -1,0 +1,144 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+:root {
+  color: #f5f7ff;
+  background: #10162b;
+  font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+
+html { overscroll-behavior: none; }
+
+body {
+  min-width: 320px;
+  min-height: 100dvh;
+  margin: 0;
+  background: radial-gradient(circle at 50% -15%, #27386a 0, #10162b 43%, #0b1020 100%);
+  overscroll-behavior: none;
+}
+
+button, output { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+
+.app-shell {
+  width: min(100%, 760px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+}
+
+.topbar {
+  min-height: 44px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.header-actions { display: flex; align-items: center; gap: 8px; }
+
+.brand { display: inline-flex; align-items: center; gap: 10px; color: #f7f8ff; text-decoration: none; font-size: 1rem; font-weight: 700; letter-spacing: .12em; }
+.brand-mark { display: grid; grid-template-columns: repeat(2, 8px); grid-template-rows: repeat(2, 8px); gap: 2px; }
+.brand-mark i { display: block; border-radius: 2px; background: #8e7dff; }
+.brand-mark i:nth-child(3) { background: #ffcf63; }
+
+.icon-button, .control-button, .primary-button {
+  border: 0;
+  color: #f8f9ff;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.icon-button { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: #1b2644; font-size: 1.55rem; line-height: 1; }
+.icon-button:active, .control-button:active, .primary-button:active { transform: translateY(1px) scale(.98); }
+.icon-button:focus-visible, .control-button:focus-visible, .primary-button:focus-visible { outline: 3px solid #d4cdff; outline-offset: 3px; }
+
+.game-layout { display: flex; flex-direction: column; align-items: center; gap: 14px; flex: 1; }
+.play-column { width: min(100%, 330px); }
+.game-frame { position: relative; width: 100%; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 42px rgba(0, 0, 0, .27); }
+#game-root { width: 100%; line-height: 0; touch-action: none; }
+#game-root canvas { display: block; width: 100% !important; height: auto !important; }
+
+.score-panel { width: min(100%, 330px); display: grid; grid-template-columns: 1.35fr 1fr; gap: 10px; }
+.score-card, .stat-row { border: 1px solid rgba(147, 168, 222, .18); border-radius: 13px; background: rgba(29, 42, 75, .67); }
+.score-card { min-height: 74px; padding: 12px 14px; display: flex; flex-direction: column; justify-content: center; }
+.label { display: block; color: #9daed7; font-family: 'DM Mono', monospace; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
+output { margin-top: 2px; color: #fff; font-family: 'DM Mono', monospace; font-size: 1.38rem; font-weight: 500; }
+.main-score output { color: #ffda7a; font-size: 1.7rem; }
+.stat-row { grid-column: span 2; padding: 10px 14px; display: grid; grid-template-columns: 1fr 1fr; }
+.stat-row > div + div { border-left: 1px solid rgba(147, 168, 222, .18); padding-left: 16px; }
+.stat-row output { display: block; font-size: 1.1rem; }
+.hint { display: none; }
+.next-card { grid-column: span 2; min-height: 58px; padding: 7px 14px; display: flex; align-items: center; justify-content: space-between; border: 1px solid rgba(147, 168, 222, .18); border-radius: 13px; background: rgba(29, 42, 75, .67); }
+.next-piece { width: 62px; height: 48px; display: grid; grid-template-columns: repeat(4, 12px); grid-template-rows: repeat(4, 12px); place-content: center; }
+.next-piece span { width: 10px; height: 10px; margin: 1px; border-radius: 3px; }
+.next-piece span.filled { box-shadow: inset 0 2px rgba(255, 255, 255, .17); }
+
+.game-over, .pause-overlay { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px; text-align: center; background: rgba(8, 13, 29, .88); backdrop-filter: blur(4px); }
+.game-over[hidden], .pause-overlay[hidden] { display: none; }
+.eyebrow { margin: 0 0 8px; color: #ffcc67; font-family: 'DM Mono', monospace; font-size: .75rem; font-weight: 500; letter-spacing: .13em; }
+.game-over h1, .pause-overlay h1 { margin: 0; font-size: clamp(1.75rem, 8vw, 2.35rem); letter-spacing: -.05em; }
+.game-over p:not(.eyebrow) { margin: 8px 0 24px; color: #bdc9ea; }
+.game-over strong { color: #fff; font-family: 'DM Mono', monospace; }
+.final-best { margin-top: -18px !important; font-size: .86rem; }
+.primary-button { min-height: 52px; padding: 0 23px; border-radius: 13px; background: #8e7dff; font-weight: 700; font-size: 1rem; }
+
+.line-clear { position: absolute; z-index: 2; top: 42%; left: 50%; min-width: 144px; padding: 9px 12px; border: 1px solid rgba(255, 230, 143, .8); border-radius: 10px; color: #fff0b8; background: rgba(24, 32, 58, .88); box-shadow: 0 8px 22px rgba(0, 0, 0, .28); font-family: 'DM Mono', monospace; font-size: .78rem; font-weight: 500; text-align: center; letter-spacing: .04em; pointer-events: none; transform: translate(-50%, -50%); }
+.line-clear[hidden] { display: none; }
+.line-clear.show { animation: line-clear-pop .85s ease-out both; }
+
+@keyframes line-clear-pop {
+  0% { opacity: 0; transform: translate(-50%, -28%) scale(.88); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1.04); }
+  72% { opacity: 1; transform: translate(-50%, -54%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -76%) scale(.96); }
+}
+
+.touch-controls { width: min(100%, 430px); margin: 16px auto 0; display: grid; grid-template-columns: 1.25fr 1.25fr 1fr 1fr 1fr; gap: 8px; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.control-button { min-height: 60px; border-radius: 14px; background: #243456; box-shadow: inset 0 1px rgba(255,255,255,.08), 0 5px 0 #131d35; font-family: 'DM Mono', monospace; font-size: 1.65rem; font-weight: 500; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.control-button.accent { background: #6258bf; box-shadow: inset 0 1px rgba(255,255,255,.13), 0 5px 0 #383172; }
+.control-button.hard-drop { color: #19213b; background: #ffce67; box-shadow: inset 0 1px rgba(255,255,255,.3), 0 5px 0 #af7e23; }
+
+@media (min-width: 650px) {
+  .app-shell { padding-top: 28px; }
+  .game-layout { flex-direction: row; align-items: flex-start; justify-content: center; gap: 20px; }
+  .score-panel { width: 185px; display: flex; flex-direction: column; gap: 10px; }
+  .score-card { min-height: 86px; }
+  .stat-row { display: flex; gap: 20px; min-height: 72px; }
+  .stat-row > div + div { padding-left: 20px; }
+  .hint { display: block; margin: 4px 0 0; color: #9daed7; font-size: .78rem; line-height: 1.75; }
+  kbd { padding: 2px 4px; border: 1px solid #53658c; border-radius: 4px; color: #e0e6fb; font-family: 'DM Mono', monospace; }
+  .touch-controls { max-width: 330px; margin-top: 18px; }
+  .next-card { min-height: 70px; }
+}
+
+@media (min-height: 771px) and (max-width: 649px) {
+  .app-shell { padding-top: max(12px, env(safe-area-inset-top)); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+  .topbar { min-height: 36px; margin-bottom: 8px; }
+  .icon-button { width: 36px; height: 36px; font-size: 1.3rem; }
+  .game-layout { gap: 8px; }
+  .play-column { width: min(100%, 330px, calc((100dvh - 370px) * .5238)); }
+  .score-card { min-height: 60px; padding: 8px 12px; }
+  .main-score output { font-size: 1.4rem; }
+  .stat-row { padding-block: 7px; }
+  .touch-controls { margin-top: 8px; }
+  .control-button { min-height: 54px; }
+}
+
+@media (max-height: 770px) and (max-width: 649px) {
+  .app-shell { padding-top: 12px; }
+  .topbar { margin-bottom: 8px; }
+  .game-layout { gap: 8px; }
+  .score-card { min-height: 58px; padding: 8px 12px; }
+  .main-score output { font-size: 1.4rem; }
+  .stat-row { padding-block: 7px; }
+  .touch-controls { margin-top: 10px; }
+  .control-button { min-height: 50px; }
+}
