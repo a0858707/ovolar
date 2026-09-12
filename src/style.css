@@ -119,26 +119,55 @@ output { margin-top: 2px; color: #fff; font-family: 'DM Mono', monospace; font-s
   .next-card { min-height: 70px; }
 }
 
-@media (min-height: 771px) and (max-width: 649px) {
-  .app-shell { padding-top: max(12px, env(safe-area-inset-top)); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+@media (max-width: 649px) {
+  html, body { height: 100%; overflow: hidden; }
+
+  .app-shell {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    max-height: 100dvh;
+    overflow: hidden;
+    padding: max(12px, env(safe-area-inset-top)) 16px max(12px, env(safe-area-inset-bottom));
+  }
+
   .topbar { min-height: 36px; margin-bottom: 8px; }
   .icon-button { width: 36px; height: 36px; font-size: 1.3rem; }
-  .game-layout { gap: 8px; }
-  .play-column { width: min(100%, 330px, calc((100dvh - 370px) * .5238)); }
-  .score-card { min-height: 60px; padding: 8px 12px; }
-  .main-score output { font-size: 1.4rem; }
-  .stat-row { padding-block: 7px; }
-  .touch-controls { margin-top: 8px; }
+
+  .game-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 8px;
+  }
+
+  .play-column {
+    width: auto;
+    height: min(100%, 630px);
+    max-width: 100%;
+    min-height: 0;
+    aspect-ratio: 11 / 21;
+    align-self: center;
+    justify-self: center;
+  }
+
+  .game-frame, #game-root, #game-root canvas { height: 100% !important; }
+  #game-root canvas { width: 100% !important; }
+  .touch-controls { width: 100%; max-width: 430px; min-width: 0; margin-top: 8px; flex: 0 0 auto; }
   .control-button { min-height: 54px; }
 }
 
+@media (min-height: 771px) and (max-width: 649px) {
+  .score-card { min-height: 60px; padding: 8px 12px; }
+  .main-score output { font-size: 1.4rem; }
+  .stat-row { padding-block: 7px; }
+}
+
 @media (max-height: 770px) and (max-width: 649px) {
-  .app-shell { padding-top: 12px; }
-  .topbar { margin-bottom: 8px; }
-  .game-layout { gap: 8px; }
   .score-card { min-height: 58px; padding: 8px 12px; }
   .main-score output { font-size: 1.4rem; }
   .stat-row { padding-block: 7px; }
-  .touch-controls { margin-top: 10px; }
   .control-button { min-height: 50px; }
 }
