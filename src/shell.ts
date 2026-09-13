@@ -10,6 +10,7 @@ const visualMarkup = (id: string, icon: string): string => {
   if (id === 'block') return '<span class="card-visual block-visual" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>';
   if (id === 'snake') return '<span class="card-visual snake-visual" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><b></b></span>';
   if (id === '2048') return '<span class="card-visual twenty48-visual" aria-hidden="true"><i>2</i><i>4</i><i>8</i><i>16</i></span>';
+  if (id === 'sliding') return '<span class="card-visual sliding-visual" aria-hidden="true"><i>1</i><i>2</i><i>3</i><i>4</i><i>5</i><i>6</i><i>7</i><i></i></span>';
   return `<span class="card-visual future-visual" aria-hidden="true">${icon}</span>`;
 };
 
@@ -155,6 +156,29 @@ const snakeMarkup = `
   </main>
 `;
 
+const slidingMarkup = `
+  <main class="app-shell sliding-shell">
+    <header class="topbar">
+      <button class="home-button" type="button" data-home aria-label="Return to Ovolar home"><span aria-hidden="true">←</span><span>OVOLAR</span></button>
+      <span class="game-title">SLIDING</span>
+      <div class="header-actions"><button class="icon-button" type="button" data-sliding-restart aria-label="New Sliding Puzzle" title="New Sliding Puzzle">↻</button></div>
+    </header>
+    <section class="sliding-layout" aria-label="Ovolar Sliding Puzzle game">
+      <div class="sliding-stats">
+        <div class="score-card main-score"><span class="label">Moves</span><output id="sliding-moves">0</output></div>
+        <div class="score-card"><span class="label">Best</span><output id="sliding-best">—</output></div>
+        <div class="score-card"><span class="label">Time</span><output id="sliding-time">0:00</output></div>
+      </div>
+      <div class="sliding-frame">
+        <div id="sliding-board" class="sliding-board" aria-label="Sliding Puzzle board"></div>
+        <div id="sliding-overlay" class="sliding-overlay" hidden><p class="eyebrow">PUZZLE COMPLETE</p><h1>In order.</h1><p id="sliding-result"></p><button class="primary-button" type="button" data-sliding-restart>New puzzle</button></div>
+      </div>
+      <p class="sliding-hint">Tap a tile beside the open space</p>
+      <button class="secondary-button sliding-restart" type="button" data-sliding-restart>New puzzle</button>
+    </section>
+  </main>
+`;
+
 const activeGame = gameByRoute(window.location.hash);
 document.body.dataset.route = activeGame?.id ?? 'home';
 
@@ -166,7 +190,7 @@ if (!activeGame) {
   });
 } else {
   document.title = activeGame.title;
-  app.innerHTML = activeGame.id === 'block' ? blockMarkup : activeGame.id === '2048' ? twenty48Markup : snakeMarkup;
+  app.innerHTML = activeGame.id === 'block' ? blockMarkup : activeGame.id === '2048' ? twenty48Markup : activeGame.id === 'snake' ? snakeMarkup : slidingMarkup;
   app.querySelector<HTMLButtonElement>('[data-home]')?.addEventListener('click', () => {
     goHome();
   });

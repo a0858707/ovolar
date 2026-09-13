@@ -24,6 +24,7 @@ export const gameRegistry: readonly GameDefinition[] = [
   { id: 'mahjong-solitaire', title: 'Mahjong Solitaire', description: 'Pair tiles. Clear the table.', category: 'Elegant Classics', theme: 'chocolate-ice-blue', status: 'coming-soon', icon: '◫' },
   { id: 'solitaire', title: 'Solitaire', description: 'A familiar deck, unhurried.', category: 'Elegant Classics', theme: 'graphite-walnut', status: 'coming-soon', icon: '♢' },
   { id: 'nonogram', title: 'Nonogram', description: 'Reveal a picture, one clue at a time.', category: 'Brain & Focus', theme: 'terracotta-sand', status: 'coming-soon', icon: '▧' },
+  { id: 'sliding', title: 'Sliding Puzzle', description: 'Put the numbers back in order.', category: 'Brain & Focus', route: '#/sliding', theme: 'indigo-apricot', bestScoreKey: 'ovolar.sliding.best-moves', status: 'playable', icon: '▦', load: () => import('./sliding') },
 ];
 
 export const gameByRoute = (hash: string): GameDefinition | undefined => gameRegistry.find((game) => game.route === hash);
