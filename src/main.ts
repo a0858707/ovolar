@@ -459,11 +459,15 @@ interface BlockGesture {
   pointerId: number;
   startX: number;
   startY: number;
+  lastX: number;
+  lastY: number;
   startedAt: number;
-  mode: 'pending' | 'horizontal' | 'soft-drop';
+  accumulatedX: number;
+  accumulatedY: number;
+  mode: 'pending' | 'horizontal' | 'soft-drop' | 'held-drop';
 }
 
-const GESTURE_DISTANCE = 24;
+const GESTURE_DISTANCE = 14;
 const HARD_DROP_DISTANCE = 84;
 const HARD_DROP_WINDOW_MS = 280;
 const TAP_DISTANCE = 14;
@@ -485,12 +489,39 @@ const finishBlockGesture = (): void => {
 
 const startGestureSoftDrop = (): void => {
   if (!blockGesture || blockGesture.mode !== 'pending') return;
-  blockGesture.mode = 'soft-drop';
+  blockGesture.mode = 'held-drop';
   touchRepeater.start('down');
 };
 
 const isTouchFirst = window.matchMedia('(pointer: coarse)').matches;
 const gameRoot = document.querySelector<HTMLElement>('#game-root')!;
+
+const dragStepThreshold = (): number => {
+  const canvas = gameRoot.querySelector<HTMLCanvasElement>('canvas');
+  const canvasWidth = canvas?.getBoundingClientRect().width ?? 0;
+  // The Phaser canvas is 11 cells wide: ten board columns plus its side gutter.
+  const cellWidth = canvasWidth > 0 ? canvasWidth / 11 : CELL;
+  return Math.max(18, cellWidth * 0.82);
+};
+
+const processHorizontalDrag = (): void => {
+  if (!blockGesture) return;
+  const threshold = dragStepThreshold();
+  while (Math.abs(blockGesture.accumulatedX) >= threshold) {
+    const direction = Math.sign(blockGesture.accumulatedX);
+    dispatchAction(direction < 0 ? 'left' : 'right');
+    blockGesture.accumulatedX -= direction * threshold;
+  }
+};
+
+const processDownwardDrag = (): void => {
+  if (!blockGesture) return;
+  const threshold = dragStepThreshold();
+  while (blockGesture.accumulatedY >= threshold) {
+    dispatchAction('down');
+    blockGesture.accumulatedY -= threshold;
+  }
+};
 
 if (isTouchFirst) {
   gameRoot.addEventListener('pointerdown', (event) => {
@@ -502,7 +533,11 @@ if (isTouchFirst) {
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
+      lastX: event.clientX,
+      lastY: event.clientY,
       startedAt: performance.now(),
+      accumulatedX: 0,
+      accumulatedY: 0,
       mode: 'pending',
     };
     gestureHoldTimer = window.setTimeout(startGestureSoftDrop, HOLD_TO_DROP_MS);
@@ -514,22 +549,40 @@ if (isTouchFirst) {
     const dx = event.clientX - blockGesture.startX;
     const dy = event.clientY - blockGesture.startY;
     const elapsed = performance.now() - blockGesture.startedAt;
+    const deltaX = event.clientX - blockGesture.lastX;
+    const deltaY = event.clientY - blockGesture.lastY;
+    blockGesture.lastX = event.clientX;
+    blockGesture.lastY = event.clientY;
+
+    if (blockGesture.mode !== 'horizontal' && dy >= HARD_DROP_DISTANCE && elapsed <= HARD_DROP_WINDOW_MS) {
+      clearGestureHold();
+      dispatchAction('drop');
+      finishBlockGesture();
+      return;
+    }
 
     if (blockGesture.mode === 'pending' && Math.abs(dx) >= GESTURE_DISTANCE && Math.abs(dx) > Math.abs(dy)) {
       clearGestureHold();
       blockGesture.mode = 'horizontal';
-      dispatchAction(dx < 0 ? 'left' : 'right');
+      blockGesture.accumulatedX = dx;
+      processHorizontalDrag();
       return;
     }
 
-    if (blockGesture.mode === 'pending' && dy >= GESTURE_DISTANCE) {
+    if (blockGesture.mode === 'pending' && dy >= GESTURE_DISTANCE && dy >= Math.abs(dx)) {
       clearGestureHold();
-      if (dy >= HARD_DROP_DISTANCE && elapsed <= HARD_DROP_WINDOW_MS) {
-        dispatchAction('drop');
-        finishBlockGesture();
-      } else {
-        startGestureSoftDrop();
-      }
+      blockGesture.mode = 'soft-drop';
+      blockGesture.accumulatedY = dy;
+      processDownwardDrag();
+      return;
+    }
+
+    if (blockGesture.mode === 'horizontal') {
+      blockGesture.accumulatedX += deltaX;
+      processHorizontalDrag();
+    } else if (blockGesture.mode === 'soft-drop') {
+      blockGesture.accumulatedY = Math.max(0, blockGesture.accumulatedY + deltaY);
+      processDownwardDrag();
     }
   }, { passive: false });
 
