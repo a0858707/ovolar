@@ -7,6 +7,9 @@ dist/
 android/.gradle/
 android/local.properties
 android/**/build/
+android/**/*.jks
+android/**/*.keystore
+android/keystore.properties
 .gradle/
 .idea/
 *.iml

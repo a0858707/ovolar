@@ -1,0 +1,69 @@
+name: Build signed store packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: User-facing version, for example 1.0.0
+        required: true
+        default: '1.0.0'
+        type: string
+      version_code:
+        description: Monotonically increasing Google Play version code
+        required: true
+        default: '1'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OVOLAR_ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/ovolar-release.keystore
+      OVOLAR_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.OVOLAR_ANDROID_KEYSTORE_PASSWORD }}
+      OVOLAR_ANDROID_KEY_ALIAS: ${{ secrets.OVOLAR_ANDROID_KEY_ALIAS }}
+      OVOLAR_ANDROID_KEY_PASSWORD: ${{ secrets.OVOLAR_ANDROID_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - run: npm run build
+      - run: npx cap sync android
+      - name: Materialize release keystore
+        env:
+          OVOLAR_ANDROID_KEYSTORE_BASE64: ${{ secrets.OVOLAR_ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$OVOLAR_ANDROID_KEYSTORE_BASE64"
+          test -n "$OVOLAR_ANDROID_KEYSTORE_PASSWORD"
+          test -n "$OVOLAR_ANDROID_KEY_ALIAS"
+          test -n "$OVOLAR_ANDROID_KEY_PASSWORD"
+          printf '%s' "$OVOLAR_ANDROID_KEYSTORE_BASE64" | base64 --decode > "$OVOLAR_ANDROID_KEYSTORE_PATH"
+      - name: Build signed Android App Bundle and APK
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew bundleRelease assembleRelease --no-daemon \
+            -POVOLAR_VERSION_NAME="${{ inputs.version_name }}" \
+            -POVOLAR_VERSION_CODE="${{ inputs.version_code }}"
+      - name: Name store packages
+        run: |
+          cp android/app/build/outputs/bundle/release/app-release.aab "ovolar-${{ inputs.version_name }}.aab"
+          cp android/app/build/outputs/apk/release/app-release.apk "ovolar-${{ inputs.version_name }}.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ovolar-store-${{ inputs.version_name }}
+          path: |
+            ovolar-${{ inputs.version_name }}.aab
+            ovolar-${{ inputs.version_name }}.apk
+          if-no-files-found: error
+          retention-days: 30

@@ -1,5 +1,14 @@
 apply plugin: 'com.android.application'
 
+def releaseVersionCode = (project.findProperty('OVOLAR_VERSION_CODE') ?: '1').toInteger()
+def releaseVersionName = project.findProperty('OVOLAR_VERSION_NAME') ?: '1.0.0'
+def releaseStorePath = System.getenv('OVOLAR_ANDROID_KEYSTORE_PATH')
+def releaseStorePassword = System.getenv('OVOLAR_ANDROID_KEYSTORE_PASSWORD')
+def releaseKeyAlias = System.getenv('OVOLAR_ANDROID_KEY_ALIAS')
+def releaseKeyPassword = System.getenv('OVOLAR_ANDROID_KEY_PASSWORD')
+def hasReleaseSigning = [releaseStorePath, releaseStorePassword, releaseKeyAlias, releaseKeyPassword]
+    .every { value -> value != null && !value.trim().isEmpty() }
+
 android {
     namespace = "games.ovolar.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +16,8 @@ android {
         applicationId "games.ovolar.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode releaseVersionCode
+        versionName releaseVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +25,23 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (hasReleaseSigning) {
+            release {
+                storeFile file(releaseStorePath)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
     buildTypes {
         release {
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            } else {
+                logger.lifecycle('Release signing is not configured; bundleRelease will produce an unsigned AAB.')
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
