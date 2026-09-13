@@ -332,7 +332,9 @@ class OvolarBlockScene extends Phaser.Scene {
 }
 
 const game = new Phaser.Game({
-  type: Phaser.AUTO,
+  // Block only uses Phaser's 2D Graphics API. Avoid a WebGL boot/fallback before
+  // the scene can create and paint its first tetromino, especially on mobile WebViews.
+  type: Phaser.CANVAS,
   parent: 'game-root',
   width: 330,
   height: 630,
