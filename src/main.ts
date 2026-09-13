@@ -56,14 +56,22 @@ const COLORS: Record<PieceKind, number> = {
 };
 
 const SCORE_FOR_LINES = [0, 100, 300, 500, 800];
-const STORAGE_KEY = 'ovolar-block-best-score';
-const LEGACY_STORAGE_KEY = 'dropstack-best-score';
+const STORAGE_KEY = 'ovolar.block.best';
+const LEGACY_STORAGE_KEYS = ['ovolar-block-best-score', 'dropstack-best-score'];
 
 const cloneMatrix = (matrix: Matrix): Matrix => matrix.map((row) => [...row]);
 
 const readBestScore = (): number => {
   try {
-    return Number.parseInt(localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY) ?? '0', 10) || 0;
+    const currentBest = localStorage.getItem(STORAGE_KEY);
+    if (currentBest !== null) return Number.parseInt(currentBest, 10) || 0;
+
+    const legacyBest = LEGACY_STORAGE_KEYS
+      .map((key) => localStorage.getItem(key))
+      .find((value): value is string => value !== null);
+    const best = Number.parseInt(legacyBest ?? '0', 10) || 0;
+    if (best > 0) localStorage.setItem(STORAGE_KEY, String(best));
+    return best;
   } catch {
     return 0;
   }
@@ -90,10 +98,17 @@ class OvolarBlockScene extends Phaser.Scene {
     const pauseWhenHidden = (): void => {
       if (document.hidden && !this.state.over && !this.state.paused) this.setPaused(true);
     };
+    const pauseWhenBlurred = (): void => {
+      if (!this.state.over && !this.state.paused) this.setPaused(true);
+    };
     document.addEventListener('visibilitychange', pauseWhenHidden);
+    window.addEventListener('blur', pauseWhenBlurred);
+    window.addEventListener('ovolar-background', pauseWhenBlurred);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       window.removeEventListener('ovolar-block-control', this.handleControl as EventListener);
       document.removeEventListener('visibilitychange', pauseWhenHidden);
+      window.removeEventListener('blur', pauseWhenBlurred);
+      window.removeEventListener('ovolar-background', pauseWhenBlurred);
     });
     this.reset();
   }
@@ -268,11 +283,11 @@ class OvolarBlockScene extends Phaser.Scene {
 
   private draw(): void {
     this.graphics.clear();
-    this.graphics.fillStyle(0x111a31, 1);
+    this.graphics.fillStyle(0x28182e, 1);
     this.graphics.fillRoundedRect(0, 0, 330, 630, 14);
-    this.graphics.fillStyle(0x0b1020, 1);
+    this.graphics.fillStyle(0x160f1a, 1);
     this.graphics.fillRoundedRect(BOARD_X - 2, BOARD_Y - 2, BOARD_WIDTH * CELL + 4, BOARD_HEIGHT * CELL + 4, 6);
-    this.graphics.lineStyle(1, 0x1b2644, 0.85);
+    this.graphics.lineStyle(1, 0x4a3652, 0.85);
     for (let x = 0; x <= BOARD_WIDTH; x += 1) this.graphics.lineBetween(BOARD_X + x * CELL, BOARD_Y, BOARD_X + x * CELL, BOARD_Y + BOARD_HEIGHT * CELL);
     for (let y = 0; y <= BOARD_HEIGHT; y += 1) this.graphics.lineBetween(BOARD_X, BOARD_Y + y * CELL, BOARD_X + BOARD_WIDTH * CELL, BOARD_Y + y * CELL);
     this.board.forEach((row, y) => row.forEach((cell, x) => {
@@ -283,7 +298,7 @@ class OvolarBlockScene extends Phaser.Scene {
         if (filled) this.drawCell(this.piece.x + x, this.piece.y + y, COLORS[this.piece.kind], 1);
       }));
     }
-    this.graphics.fillStyle(0x94a6d5, 0.75);
+    this.graphics.fillStyle(0xc8e96b, 0.75);
     this.graphics.fillRect(BOARD_X, 625, BOARD_WIDTH * CELL, 1);
   }
 
@@ -419,11 +434,114 @@ document.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) =
   button.addEventListener('contextmenu', (event) => event.preventDefault());
   button.addEventListener('selectstart', (event) => event.preventDefault());
 });
+
+interface BlockGesture {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  startedAt: number;
+  mode: 'pending' | 'horizontal' | 'soft-drop';
+}
+
+const GESTURE_DISTANCE = 24;
+const HARD_DROP_DISTANCE = 84;
+const HARD_DROP_WINDOW_MS = 280;
+const TAP_DISTANCE = 14;
+const TAP_WINDOW_MS = 280;
+const HOLD_TO_DROP_MS = 190;
+let blockGesture: BlockGesture | undefined;
+let gestureHoldTimer: number | undefined;
+
+const clearGestureHold = (): void => {
+  if (gestureHoldTimer !== undefined) window.clearTimeout(gestureHoldTimer);
+  gestureHoldTimer = undefined;
+};
+
+const finishBlockGesture = (): void => {
+  clearGestureHold();
+  touchRepeater.stop();
+  blockGesture = undefined;
+};
+
+const startGestureSoftDrop = (): void => {
+  if (!blockGesture || blockGesture.mode !== 'pending') return;
+  blockGesture.mode = 'soft-drop';
+  touchRepeater.start('down');
+};
+
+const isTouchFirst = window.matchMedia('(pointer: coarse)').matches;
+const gameRoot = document.querySelector<HTMLElement>('#game-root')!;
+
+if (isTouchFirst) {
+  gameRoot.addEventListener('pointerdown', (event) => {
+    if (event.pointerType !== 'touch') return;
+    event.preventDefault();
+    finishBlockGesture();
+    gameRoot.setPointerCapture(event.pointerId);
+    blockGesture = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startedAt: performance.now(),
+      mode: 'pending',
+    };
+    gestureHoldTimer = window.setTimeout(startGestureSoftDrop, HOLD_TO_DROP_MS);
+  }, { passive: false });
+
+  gameRoot.addEventListener('pointermove', (event) => {
+    if (!blockGesture || event.pointerId !== blockGesture.pointerId) return;
+    event.preventDefault();
+    const dx = event.clientX - blockGesture.startX;
+    const dy = event.clientY - blockGesture.startY;
+    const elapsed = performance.now() - blockGesture.startedAt;
+
+    if (blockGesture.mode === 'pending' && Math.abs(dx) >= GESTURE_DISTANCE && Math.abs(dx) > Math.abs(dy)) {
+      clearGestureHold();
+      blockGesture.mode = 'horizontal';
+      dispatchAction(dx < 0 ? 'left' : 'right');
+      return;
+    }
+
+    if (blockGesture.mode === 'pending' && dy >= GESTURE_DISTANCE) {
+      clearGestureHold();
+      if (dy >= HARD_DROP_DISTANCE && elapsed <= HARD_DROP_WINDOW_MS) {
+        dispatchAction('drop');
+        finishBlockGesture();
+      } else {
+        startGestureSoftDrop();
+      }
+    }
+  }, { passive: false });
+
+  const endGesture = (event: PointerEvent): void => {
+    if (!blockGesture || event.pointerId !== blockGesture.pointerId) return;
+    event.preventDefault();
+    const { startX, startY, startedAt, mode } = blockGesture;
+    const dx = event.clientX - startX;
+    const dy = event.clientY - startY;
+    const elapsed = performance.now() - startedAt;
+    if (mode === 'pending' && dy >= HARD_DROP_DISTANCE && elapsed <= HARD_DROP_WINDOW_MS) {
+      dispatchAction('drop');
+    } else if (mode === 'pending' && Math.hypot(dx, dy) <= TAP_DISTANCE && elapsed <= TAP_WINDOW_MS) {
+      dispatchAction('rotate');
+    }
+    finishBlockGesture();
+  };
+
+  gameRoot.addEventListener('pointerup', endGesture, { passive: false });
+  gameRoot.addEventListener('pointercancel', finishBlockGesture);
+  gameRoot.addEventListener('lostpointercapture', finishBlockGesture);
+}
+
 window.addEventListener('pointerup', (event) => {
   stopHeldPointer(event);
 });
 window.addEventListener('pointercancel', stopHeldPointer);
-window.addEventListener('blur', stopHeldControl);
+window.addEventListener('blur', () => { stopHeldControl(); finishBlockGesture(); });
+window.addEventListener('ovolar-background', () => { stopHeldControl(); finishBlockGesture(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { stopHeldControl(); finishBlockGesture(); }
+});
 document.querySelectorAll<HTMLButtonElement>('#restart-top, #restart-overlay').forEach((button) => {
   button.addEventListener('click', () => {
     stopHeldControl();

@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'games.ovolar.block',
-  appName: 'Ovolar Block',
+  appId: 'games.ovolar.app',
+  appName: 'Ovolar',
   webDir: 'dist',
   server: {
     androidScheme: 'https',

@@ -1,4 +1,4 @@
-package com.getcapacitor.myapp;
+package games.ovolar.app;
 
 import static org.junit.Assert.*;
 

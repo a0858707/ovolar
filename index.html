@@ -4,72 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#10162b" />
-    <meta name="description" content="A fast, clean falling-block puzzle game." />
+    <meta name="description" content="Ovolar is a fast, offline-friendly mini-game hub." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>Ovolar Block</title>
+    <title>Ovolar</title>
   </head>
   <body>
-    <main class="app-shell">
-      <header class="topbar">
-        <a class="brand" href="/" aria-label="Ovolar Block home">
-          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-          <span>OVOLAR BLOCK</span>
-        </a>
-        <div class="header-actions">
-          <button id="pause-button" class="icon-button" type="button" aria-label="Pause game" title="Pause game">Ⅱ</button>
-          <button id="restart-top" class="icon-button" type="button" aria-label="Restart game" title="Restart game">↻</button>
-        </div>
-      </header>
-
-      <section class="game-layout" aria-label="Ovolar Block game">
-        <div class="play-column">
-          <div class="game-frame">
-            <div id="game-root" aria-label="Falling block game board"></div>
-            <div id="game-over" class="game-over" hidden>
-              <p class="eyebrow">RUN OVER</p>
-              <h1>Stack reset.</h1>
-              <p>Final score <strong id="final-score">0</strong></p>
-              <p class="final-best">Best <strong id="final-best">0</strong></p>
-              <button id="restart-overlay" class="primary-button" type="button">Play again</button>
-            </div>
-            <div id="pause-overlay" class="pause-overlay" hidden>
-              <p class="eyebrow">PAUSED</p>
-              <h1>Take a breath.</h1>
-              <button id="resume-overlay" class="primary-button" type="button">Resume</button>
-            </div>
-            <div id="line-clear" class="line-clear" aria-live="polite" hidden></div>
-          </div>
-        </div>
-
-        <aside class="score-panel" aria-label="Game statistics">
-          <div class="score-card main-score">
-            <span class="label">Score</span>
-            <output id="score">0</output>
-          </div>
-          <div class="score-card">
-            <span class="label">Best</span>
-            <output id="best-score">0</output>
-          </div>
-          <div class="stat-row">
-            <div><span class="label">Lines</span><output id="lines">0</output></div>
-            <div><span class="label">Level</span><output id="level">1</output></div>
-          </div>
-          <div class="next-card">
-            <span class="label">Next</span>
-            <div id="next-piece" class="next-piece" aria-label="Next piece"></div>
-          </div>
-          <p class="hint"><kbd>←</kbd><kbd>→</kbd> move &nbsp; <kbd>↑</kbd> turn<br /><kbd>↓</kbd> soft drop &nbsp; <kbd>Space</kbd> slam</p>
-        </aside>
-      </section>
-
-      <nav class="touch-controls" aria-label="Touch game controls">
-        <button class="control-button wide" type="button" data-action="left" aria-label="Move left">←</button>
-        <button class="control-button wide" type="button" data-action="right" aria-label="Move right">→</button>
-        <button class="control-button accent" type="button" data-action="rotate" aria-label="Rotate clockwise">↻</button>
-        <button class="control-button" type="button" data-action="down" aria-label="Soft drop">↓</button>
-        <button class="control-button hard-drop" type="button" data-action="drop" aria-label="Hard drop">⇩</button>
-      </nav>
-    </main>
-    <script type="module" src="/src/main.ts"></script>
+    <div id="app"></div>
+    <script type="module" src="/src/shell.ts"></script>
   </body>
 </html>

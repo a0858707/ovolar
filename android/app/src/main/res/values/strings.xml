@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Ovolar Block</string>
-    <string name="title_activity_main">Ovolar Block</string>
-    <string name="package_name">games.ovolar.block</string>
-    <string name="custom_url_scheme">games.ovolar.block</string>
+    <string name="app_name">Ovolar</string>
+    <string name="title_activity_main">Ovolar</string>
+    <string name="package_name">games.ovolar.app</string>
+    <string name="custom_url_scheme">games.ovolar.app</string>
 </resources>
