@@ -123,9 +123,13 @@ button { -webkit-tap-highlight-color: transparent; }
 .label { display: block; color: var(--theme-muted); font-family: 'DM Mono', monospace; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
 output { margin-top: 2px; color: var(--theme-text); font-family: 'DM Mono', monospace; font-size: 1.38rem; font-weight: 500; }
 .main-score output { color: var(--theme-accent); font-size: 1.7rem; }
-.stat-row { grid-column: span 2; padding: 10px 14px; display: grid; grid-template-columns: 1fr 1fr; }
+.stat-row { grid-column: span 2; padding: 10px 14px; display: grid; grid-template-columns: repeat(3, 1fr); }
 .stat-row > div + div { border-left: 1px solid var(--theme-border); padding-left: 16px; }
 .stat-row output { display: block; font-size: 1.1rem; }
+.lives-card { min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.life-pips { display: inline-flex; align-items: center; gap: 4px; min-height: 20px; margin-top: 4px; }
+.life-pip { width: 8px; height: 8px; display: block; border: 1px solid var(--theme-border); border-radius: 50%; background: color-mix(in srgb, var(--theme-raised) 72%, var(--theme-bg)); }
+.life-pip.is-active { border-color: color-mix(in srgb, var(--theme-accent) 75%, var(--theme-border)); background: var(--theme-accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-accent) 12%, transparent); }
 .hint { display: none; }
 .next-card { grid-column: span 2; min-height: 58px; padding: 7px 14px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--theme-border); border-radius: 13px; background: var(--theme-surface); }
 .gesture-hint { display: none; grid-column: span 2; margin: 0; color: var(--theme-muted); font-family: 'DM Mono', monospace; font-size: .68rem; letter-spacing: .02em; text-align: center; }
@@ -145,8 +149,9 @@ output { margin-top: 2px; color: var(--theme-text); font-family: 'DM Mono', mono
 
 .twenty48-shell { justify-content: flex-start; }
 .twenty48-layout { width: min(100%, 430px); margin: 0 auto; display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 14px; min-height: 0; }
-.twenty48-stats { width: min(100%, 390px); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.twenty48-stats { width: min(100%, 390px); display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .twenty48-stats .score-card { min-height: 70px; }
+.twenty48-stats .lives-card, .snake-stats .lives-card { min-height: 70px; padding: 12px 14px; border: 1px solid var(--theme-border); border-radius: 13px; background: var(--theme-surface); }
 .twenty48-frame { position: relative; width: min(100%, 390px); aspect-ratio: 1; padding: 9px; border: 1px solid var(--theme-border); border-radius: 20px; background: var(--theme-raised); box-shadow: 0 18px 32px rgba(0, 0, 0, .18); }
 .twenty48-board { width: 100%; height: 100%; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); gap: 9px; touch-action: none; overscroll-behavior: none; }
 .twenty48-tile { display: grid; place-items: center; min-width: 0; border-radius: 12px; background: color-mix(in srgb, var(--theme-surface) 74%, var(--theme-bg)); color: var(--theme-text); font-family: 'DM Mono', ui-monospace, monospace; font-size: clamp(1.15rem, 8vw, 2rem); font-weight: 700; transition: transform .14s ease, background-color .14s ease; }
@@ -155,10 +160,12 @@ output { margin-top: 2px; color: var(--theme-text); font-family: 'DM Mono', mono
 @keyframes twenty48-settle { 0% { transform: scale(.93); } 65% { transform: scale(1.025); } 100% { transform: scale(1); } }
 .twenty48-overlay { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px; border-radius: inherit; text-align: center; background: rgba(38, 40, 26, .91); backdrop-filter: blur(4px); }.twenty48-overlay[hidden] { display: none; }.twenty48-overlay h1 { margin: 0; font-size: clamp(1.7rem, 8vw, 2.25rem); letter-spacing: -.05em; }.twenty48-overlay p:not(.eyebrow) { margin: 9px 0 22px; color: var(--theme-muted); }.twenty48-overlay-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; }
 .twenty48-hint { margin: 0; color: var(--theme-muted); font-family: 'DM Mono', ui-monospace, monospace; font-size: .72rem; }.twenty48-restart { display: none; }
+.life-notice { min-height: 16px; margin: -4px 0 0; color: var(--theme-accent); font-family: 'DM Mono', ui-monospace, monospace; font-size: .68rem; text-align: center; }
+.life-notice[hidden] { display: none; }
 
 .snake-shell { justify-content: flex-start; }
 .snake-layout { width: min(100%, 400px); margin: 0 auto; display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 14px; min-height: 0; }
-.snake-stats { width: min(100%, 360px); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.snake-stats { width: min(100%, 360px); display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .snake-stats .score-card { min-height: 70px; }
 .snake-frame { position: relative; width: min(100%, 360px); aspect-ratio: 1; padding: 8px; border: 1px solid var(--theme-border); border-radius: 20px; background: var(--theme-raised); box-shadow: 0 18px 32px rgba(0, 0, 0, .2); }
 .snake-board { width: 100%; height: 100%; display: grid; grid-template-columns: repeat(20, 1fr); grid-template-rows: repeat(20, 1fr); gap: 2px; touch-action: none; overscroll-behavior: none; }
@@ -194,7 +201,7 @@ output { margin-top: 2px; color: var(--theme-text); font-family: 'DM Mono', mono
   .stat-row > div + div { padding-left: 20px; }
   .hint { display: block; margin: 4px 0 0; color: var(--theme-muted); font-size: .78rem; line-height: 1.75; }
   kbd { padding: 2px 4px; border: 1px solid #53658c; border-radius: 4px; color: #e0e6fb; font-family: 'DM Mono', monospace; }
-  .touch-controls { max-width: 330px; margin-top: 18px; }
+  .touch-controls { display: none; }
   .next-card { min-height: 70px; }
 }
 
@@ -250,6 +257,7 @@ output { margin-top: 2px; color: var(--theme-text); font-family: 'DM Mono', mono
   .twenty48-layout { justify-content: center; gap: 10px; }
   .twenty48-stats { width: min(100%, 350px); }
   .twenty48-stats .score-card { min-height: 58px; padding: 8px 12px; }
+  .twenty48-stats .lives-card, .snake-stats .lives-card { min-height: 58px; padding: 8px 12px; }
   .twenty48-frame { width: min(100%, 350px); }
   .twenty48-restart { display: block; min-height: 46px; }
   .snake-layout { justify-content: center; gap: 10px; }

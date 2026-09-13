@@ -1,6 +1,6 @@
 import './style.css';
 import { categories, gameByRoute, gameRegistry } from './game-registry';
-import { goHome } from './platform';
+import { goHome, livesMarkup } from './platform';
 
 const app = document.querySelector<HTMLElement>('#app');
 
@@ -78,6 +78,7 @@ const blockMarkup = `
         <div class="stat-row">
           <div><span class="label">Lines</span><output id="lines">0</output></div>
           <div><span class="label">Level</span><output id="level">1</output></div>
+          ${livesMarkup('block-lives')}
         </div>
         <div class="next-card">
           <span class="label">Next</span>
@@ -109,6 +110,7 @@ const twenty48Markup = `
       <div class="twenty48-stats">
         <div class="score-card main-score"><span class="label">Score</span><output id="twenty48-score">0</output></div>
         <div class="score-card"><span class="label">Best</span><output id="twenty48-best">0</output></div>
+        ${livesMarkup('twenty48-lives')}
       </div>
       <div class="twenty48-frame">
         <div id="twenty48-board" class="twenty48-board" aria-label="2048 board"></div>
@@ -118,6 +120,7 @@ const twenty48Markup = `
         </div>
       </div>
       <p class="twenty48-hint">Swipe any direction to merge</p>
+      <p id="twenty48-life-notice" class="life-notice" aria-live="polite" hidden></p>
       <button class="secondary-button twenty48-restart" type="button" data-twenty48-restart>Restart</button>
     </section>
   </main>
@@ -131,7 +134,7 @@ const snakeMarkup = `
       <div class="header-actions"><button id="snake-pause" class="icon-button" type="button" aria-label="Pause game" title="Pause game">Ⅱ</button><button class="icon-button" type="button" data-snake-restart aria-label="Restart Snake" title="Restart Snake">↻</button></div>
     </header>
     <section class="snake-layout" aria-label="Ovolar Snake game">
-      <div class="snake-stats"><div class="score-card main-score"><span class="label">Score</span><output id="snake-score">0</output></div><div class="score-card"><span class="label">Best</span><output id="snake-best">0</output></div></div>
+      <div class="snake-stats"><div class="score-card main-score"><span class="label">Score</span><output id="snake-score">0</output></div><div class="score-card"><span class="label">Best</span><output id="snake-best">0</output></div>${livesMarkup('snake-lives')}</div>
       <div class="snake-frame">
         <div id="snake-board" class="snake-board" aria-label="Snake board"></div>
         <div id="snake-overlay" class="snake-overlay" hidden><p class="eyebrow">OVOLAR SNAKE</p><h1 id="snake-overlay-title"></h1><p id="snake-overlay-text"></p><div class="snake-overlay-actions"><button id="snake-resume" class="primary-button" type="button">Resume</button><button class="secondary-button" type="button" data-snake-restart>Restart</button></div></div>

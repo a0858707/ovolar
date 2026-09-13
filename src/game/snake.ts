@@ -49,4 +49,5 @@ export const stepSnake = (snake: Point[], direction: Direction, food: Point): Sn
   return { snake: ate ? [head, ...snake] : [head, ...snake.slice(0, -1)], ate };
 };
 
-export const speedForScore = (score: number): number => Math.max(70, 155 - score * 5);
+// Starts calm, then eases toward a responsive 90ms cap without abrupt jumps.
+export const speedForScore = (score: number): number => Math.max(90, Math.round(90 + 110 * Math.exp(-score / 16)));

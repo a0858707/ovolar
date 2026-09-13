@@ -1,4 +1,5 @@
 export type GameId = 'block' | '2048' | 'snake';
+export const MAX_LIVES = 3;
 
 export const storageKey = (gameId: GameId, key: string): string => `ovolar.${gameId}.${key}`;
 
@@ -25,4 +26,16 @@ export const pauseWhenBackgrounded = (pause: () => void): (() => void) => {
     window.removeEventListener('blur', pause);
     window.removeEventListener('ovolar-background', pause);
   };
+};
+
+export const livesMarkup = (id: string): string => `<div class="lives-card"><span class="label">Lives</span><span id="${id}" class="life-pips" aria-label="3 lives remaining"></span></div>`;
+
+export const renderLives = (element: HTMLElement, lives: number): void => {
+  element.replaceChildren(...Array.from({ length: MAX_LIVES }, (_, index) => {
+    const pip = document.createElement('i');
+    pip.className = `life-pip${index < lives ? ' is-active' : ''}`;
+    pip.setAttribute('aria-hidden', 'true');
+    return pip;
+  }));
+  element.setAttribute('aria-label', `${lives} ${lives === 1 ? 'life' : 'lives'} remaining`);
 };

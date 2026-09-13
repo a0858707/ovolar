@@ -79,3 +79,13 @@ export const canMove = (board: Board): boolean => board.some((row, y) => row.som
   if (!value) return true;
   return board[y + 1]?.[x] === value || row[x + 1] === value;
 }));
+
+/** Opens two low-value cells while retaining the run's most valuable progress. */
+export const rescueBoard = (board: Board, cellsToClear = 2): Board => {
+  const next = cloneBoard(board);
+  const candidates = board.flatMap((row, y) => row.map((value, x) => ({ value, x, y })))
+    .filter(({ value }) => value > 0)
+    .sort((first, second) => first.value - second.value || first.y - second.y || first.x - second.x);
+  candidates.slice(0, cellsToClear).forEach(({ x, y }) => { next[y][x] = 0; });
+  return next;
+};

@@ -2,7 +2,9 @@ import Phaser from 'phaser';
 import { createShuffledBag, type PieceKind } from './game/bag';
 import { findClockwiseRotation, type Matrix } from './game/rotation';
 import { TouchRepeater, type RepeatScheduler } from './game/touch-repeat';
+import { rescueBlockBoard } from './game/block-rescue';
 import { haptic } from './feedback';
+import { MAX_LIVES, renderLives } from './platform';
 import './style.css';
 
 const BOARD_WIDTH = 10;
@@ -28,6 +30,7 @@ interface GameState {
   level: number;
   over: boolean;
   paused: boolean;
+  lives: number;
   next: PieceKind;
 }
 
@@ -84,7 +87,7 @@ class OvolarBlockScene extends Phaser.Scene {
   private graphics!: Phaser.GameObjects.Graphics;
   private bag: PieceKind[] = [];
   private nextKind!: PieceKind;
-  private state: GameState = { score: 0, best: readBestScore(), lines: 0, level: 1, over: false, paused: false, next: 'I' };
+  private state: GameState = { score: 0, best: readBestScore(), lines: 0, level: 1, over: false, paused: false, lives: MAX_LIVES, next: 'I' };
   private elapsed = 0;
   private dropInterval = 750;
 
@@ -159,7 +162,7 @@ class OvolarBlockScene extends Phaser.Scene {
     this.board = Array.from({ length: BOARD_HEIGHT }, () => Array<Cell>(BOARD_WIDTH).fill(0));
     this.bag = [];
     this.nextKind = this.nextPieceKind();
-    this.state = { score: 0, best: readBestScore(), lines: 0, level: 1, over: false, paused: false, next: this.nextKind };
+    this.state = { score: 0, best: readBestScore(), lines: 0, level: 1, over: false, paused: false, lives: MAX_LIVES, next: this.nextKind };
     this.dropInterval = 750;
     this.elapsed = 0;
     this.spawnPiece();
@@ -174,9 +177,22 @@ class OvolarBlockScene extends Phaser.Scene {
     const shape = cloneMatrix(SHAPES[kind]);
     this.piece = { kind, shape, x: Math.floor((BOARD_WIDTH - shape[0].length) / 2), y: 0 };
     if (this.collides(this.piece)) {
+      this.handleTopOut();
+    }
+  }
+
+  private handleTopOut(): void {
+    if (this.state.lives <= 1) {
+      this.state.lives = 0;
       this.state.over = true;
       this.saveBest();
+      haptic('impact');
+      return;
     }
+    this.state.lives -= 1;
+    this.board = rescueBlockBoard(this.board, 0);
+    this.elapsed = 0;
+    haptic('impact');
   }
 
   private nextPieceKind(): PieceKind {
@@ -337,6 +353,7 @@ const pauseOverlay = document.querySelector<HTMLElement>('#pause-overlay')!;
 const pauseButton = document.querySelector<HTMLButtonElement>('#pause-button')!;
 const nextPiece = document.querySelector<HTMLElement>('#next-piece')!;
 const lineClear = document.querySelector<HTMLElement>('#line-clear')!;
+const lives = document.querySelector<HTMLElement>('#block-lives')!;
 
 const colorToCss = (color: number): string => `#${color.toString(16).padStart(6, '0')}`;
 
@@ -361,6 +378,7 @@ window.addEventListener('ovolar-block-state', ((event: CustomEvent<GameState>) =
   best.value = String(state.best);
   lines.value = String(state.lines);
   level.value = String(state.level);
+  renderLives(lives, state.lives);
   gameOver.hidden = !state.over;
   pauseOverlay.hidden = !state.paused;
   pauseButton.textContent = state.paused ? '▶' : 'Ⅱ';

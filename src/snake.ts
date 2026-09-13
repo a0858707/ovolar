@@ -8,7 +8,7 @@ import {
   type Direction,
 } from './game/snake';
 import { haptic } from './feedback';
-import { pauseWhenBackgrounded, readStoredNumber, storageKey, writeStoredNumber } from './platform';
+import { MAX_LIVES, pauseWhenBackgrounded, readStoredNumber, renderLives, storageKey, writeStoredNumber } from './platform';
 
 const BEST_KEY = storageKey('snake', 'best');
 const SWIPE_DISTANCE = 24;
@@ -21,6 +21,7 @@ const overlayTitle = document.querySelector<HTMLElement>('#snake-overlay-title')
 const overlayText = document.querySelector<HTMLElement>('#snake-overlay-text')!;
 const resumeButton = document.querySelector<HTMLButtonElement>('#snake-resume')!;
 const pauseButton = document.querySelector<HTMLButtonElement>('#snake-pause')!;
+const livesElement = document.querySelector<HTMLElement>('#snake-lives')!;
 
 let snake = initialSnake();
 let food = spawnFood(snake)!;
@@ -31,6 +32,7 @@ let best = readBest();
 let gameOver = false;
 let paused = false;
 let timer: number | undefined;
+let lives = MAX_LIVES;
 
 function readBest(): number { return readStoredNumber(BEST_KEY); }
 
@@ -55,6 +57,7 @@ function render(): void {
   }));
   scoreElement.value = String(score);
   bestElement.value = String(best);
+  renderLives(livesElement, lives);
 }
 
 function stopTimer(): void {
@@ -98,10 +101,17 @@ function tick(): void {
   direction = queuedDirection;
   const result = stepSnake(snake, direction, food);
   if (result.collision) {
-    gameOver = true;
     stopTimer();
     haptic('impact');
-    showOverlay('Run over.', result.collision === 'wall' ? 'The edge got you.' : 'You ran into yourself.', false);
+    if (lives > 1) {
+      lives -= 1;
+      respawnAfterLifeLoss();
+    } else {
+      lives = 0;
+      gameOver = true;
+      showOverlay('Run over.', result.collision === 'wall' ? 'The edge got you.' : 'You ran into yourself.', false);
+      render();
+    }
     return;
   }
   snake = result.snake;
@@ -122,6 +132,18 @@ function tick(): void {
   render();
 }
 
+function respawnAfterLifeLoss(): void {
+  snake = initialSnake();
+  food = spawnFood(snake)!;
+  direction = 'right';
+  queuedDirection = 'right';
+  paused = true;
+  pauseButton.textContent = '▶';
+  pauseButton.setAttribute('aria-label', 'Resume game');
+  showOverlay('Life saved.', 'Ready when you are.', true);
+  render();
+}
+
 function requestDirection(next: Direction): void {
   if (gameOver || paused || !canQueueDirection(direction, queuedDirection, next)) return;
   queuedDirection = next;
@@ -136,6 +158,7 @@ function restart(): void {
   score = 0;
   gameOver = false;
   paused = false;
+  lives = MAX_LIVES;
   pauseButton.textContent = 'Ⅱ';
   pauseButton.setAttribute('aria-label', 'Pause game');
   hideOverlay();

@@ -1,5 +1,6 @@
-import { canMove, createStartingBoard, moveBoard, type Board, type Direction } from './game/twenty48';
-import { readStoredNumber, storageKey, writeStoredNumber } from './platform';
+import { canMove, createStartingBoard, moveBoard, rescueBoard, type Board, type Direction } from './game/twenty48';
+import { haptic } from './feedback';
+import { MAX_LIVES, readStoredNumber, renderLives, storageKey, writeStoredNumber } from './platform';
 
 const BEST_KEY = storageKey('2048', 'best');
 const SWIPE_DISTANCE = 28;
@@ -11,6 +12,8 @@ const overlay = document.querySelector<HTMLElement>('#twenty48-overlay')!;
 const overlayTitle = document.querySelector<HTMLElement>('#twenty48-overlay-title')!;
 const overlayText = document.querySelector<HTMLElement>('#twenty48-overlay-text')!;
 const continueButton = document.querySelector<HTMLButtonElement>('#twenty48-continue')!;
+const livesElement = document.querySelector<HTMLElement>('#twenty48-lives')!;
+const lifeNotice = document.querySelector<HTMLElement>('#twenty48-life-notice')!;
 
 let board: Board = createStartingBoard();
 let score = 0;
@@ -18,6 +21,8 @@ let best = readBest();
 let wonDismissed = false;
 let gameOver = false;
 let movingTimer: number | undefined;
+let lives = MAX_LIVES;
+let lifeNoticeTimer: number | undefined;
 
 function readBest(): number { return readStoredNumber(BEST_KEY); }
 
@@ -36,6 +41,7 @@ function render(animated = false): void {
   })));
   scoreElement.value = String(score);
   bestElement.value = String(best);
+  renderLives(livesElement, lives);
   if (animated) {
     boardElement.classList.remove('is-moving');
     void boardElement.offsetWidth;
@@ -55,6 +61,13 @@ function showOverlay(type: 'win' | 'over'): void {
 
 function hideOverlay(): void { overlay.hidden = true; }
 
+function showLifeNotice(): void {
+  lifeNotice.textContent = 'One life used · board opened';
+  lifeNotice.hidden = false;
+  if (lifeNoticeTimer !== undefined) window.clearTimeout(lifeNoticeTimer);
+  lifeNoticeTimer = window.setTimeout(() => { lifeNotice.hidden = true; }, 1400);
+}
+
 function move(direction: Direction): void {
   if (gameOver || !overlay.hidden) return;
   const result = moveBoard(board, direction);
@@ -63,12 +76,21 @@ function move(direction: Direction): void {
   score += result.scoreDelta;
   saveBest();
   board = createSpawnedBoard(board);
-  render(true);
   if (result.created2048 && !wonDismissed) showOverlay('win');
   else if (!canMove(board)) {
-    gameOver = true;
-    showOverlay('over');
+    if (lives > 1) {
+      lives -= 1;
+      board = rescueBoard(board);
+      haptic('impact');
+      showLifeNotice();
+    } else {
+      lives = 0;
+      gameOver = true;
+      haptic('impact');
+      showOverlay('over');
+    }
   }
+  render(true);
 }
 
 function createSpawnedBoard(current: Board): Board {
@@ -86,6 +108,8 @@ function restart(): void {
   score = 0;
   wonDismissed = false;
   gameOver = false;
+  lives = MAX_LIVES;
+  lifeNotice.hidden = true;
   hideOverlay();
   render();
 }
