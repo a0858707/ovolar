@@ -1,4 +1,4 @@
-export type GameId = 'block' | '2048' | 'snake' | 'sliding';
+export type GameId = 'block' | '2048' | 'snake' | 'sliding' | 'pairs';
 export const MAX_LIVES = 3;
 
 export const storageKey = (gameId: GameId, key: string): string => `ovolar.${gameId}.${key}`;

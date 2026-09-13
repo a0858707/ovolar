@@ -11,6 +11,7 @@ const visualMarkup = (id: string, icon: string): string => {
   if (id === 'snake') return '<span class="card-visual snake-visual" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><b></b></span>';
   if (id === '2048') return '<span class="card-visual twenty48-visual" aria-hidden="true"><i>2</i><i>4</i><i>8</i><i>16</i></span>';
   if (id === 'sliding') return '<span class="card-visual sliding-visual" aria-hidden="true"><i>1</i><i>2</i><i>3</i><i>4</i><i>5</i><i>6</i><i>7</i><i></i></span>';
+  if (id === 'pairs') return '<span class="card-visual pairs-visual" aria-hidden="true"><i>✦</i><i>✦</i><i>☾</i><i>☾</i></span>';
   return `<span class="card-visual future-visual" aria-hidden="true">${icon}</span>`;
 };
 
@@ -183,6 +184,10 @@ const slidingMarkup = `
   </main>
 `;
 
+const pairsMarkup = `
+  <main class="app-shell pairs-shell"><header class="topbar"><button class="home-button" type="button" data-home aria-label="Return to Ovolar home"><span aria-hidden="true">←</span><span>OVOLAR</span></button><span class="game-title">PAIRS</span><div class="header-actions"><button id="pairs-theme" class="icon-button theme-cycle-button" type="button" aria-label="Change Match Pairs theme" title="Change theme" hidden>◐</button><button class="icon-button" type="button" data-pairs-restart aria-label="New Match Pairs game" title="New game">↻</button></div></header><section class="pairs-layout" aria-label="Match Pairs game"><div class="pairs-stats"><div class="score-card main-score"><span class="label">Moves</span><output id="pairs-moves">0</output></div><div class="score-card"><span class="label">Time</span><output id="pairs-time">0:00</output></div></div><div class="pairs-frame"><div id="pairs-board" class="pairs-board" aria-label="Match Pairs board"></div><div id="pairs-event" class="game-event" aria-live="polite" hidden></div><div id="pairs-overlay" class="pairs-overlay" hidden><p class="eyebrow">PAIRS COMPLETE</p><h1>Well remembered.</h1><p id="pairs-result"></p><button class="primary-button" type="button" data-pairs-restart>New game</button></div></div><p class="pairs-hint">Reveal two cards to find a match</p><button class="secondary-button pairs-restart" type="button" data-pairs-restart>New game</button></section></main>
+`;
+
 const activeGame = gameByRoute(window.location.hash);
 document.body.dataset.route = activeGame?.id ?? 'home';
 
@@ -194,7 +199,7 @@ if (!activeGame) {
   });
 } else {
   document.title = activeGame.title;
-  app.innerHTML = activeGame.id === 'block' ? blockMarkup : activeGame.id === '2048' ? twenty48Markup : activeGame.id === 'snake' ? snakeMarkup : slidingMarkup;
+  app.innerHTML = activeGame.id === 'block' ? blockMarkup : activeGame.id === '2048' ? twenty48Markup : activeGame.id === 'snake' ? snakeMarkup : activeGame.id === 'sliding' ? slidingMarkup : pairsMarkup;
   app.querySelector<HTMLButtonElement>('[data-home]')?.addEventListener('click', () => {
     goHome();
   });
