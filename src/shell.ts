@@ -52,6 +52,7 @@ const blockMarkup = `
       </button>
       <span class="game-title">BLOCK</span>
       <div class="header-actions">
+        <button id="block-theme" class="icon-button theme-cycle-button" type="button" aria-label="Change Block theme" title="Change theme" hidden>◐</button>
         <button id="pause-button" class="icon-button" type="button" aria-label="Pause game" title="Pause game">Ⅱ</button>
         <button id="restart-top" class="icon-button" type="button" aria-label="Restart game" title="Restart game">↻</button>
       </div>
@@ -115,7 +116,7 @@ const twenty48Markup = `
     <header class="topbar">
       <button class="home-button" type="button" data-home aria-label="Return to Ovolar home"><span aria-hidden="true">←</span><span>OVOLAR</span></button>
       <span class="game-title">2048</span>
-      <div class="header-actions"><button class="icon-button" type="button" data-twenty48-restart aria-label="Restart 2048" title="Restart 2048">↻</button></div>
+      <div class="header-actions"><button id="twenty48-theme" class="icon-button theme-cycle-button" type="button" aria-label="Change 2048 theme" title="Change theme" hidden>◐</button><button class="icon-button" type="button" data-twenty48-restart aria-label="Restart 2048" title="Restart 2048">↻</button></div>
     </header>
     <section class="twenty48-layout" aria-label="Ovolar 2048 game">
       <div class="twenty48-stats">
@@ -125,6 +126,7 @@ const twenty48Markup = `
       </div>
       <div class="twenty48-frame">
         <div id="twenty48-board" class="twenty48-board" aria-label="2048 board"></div>
+        <div id="twenty48-event" class="game-event" aria-live="polite" hidden></div>
         <div id="twenty48-overlay" class="twenty48-overlay" hidden>
           <p class="eyebrow">OVOLAR 2048</p><h1 id="twenty48-overlay-title"></h1><p id="twenty48-overlay-text"></p>
           <div class="twenty48-overlay-actions"><button id="twenty48-continue" class="primary-button" type="button">Continue</button><button class="secondary-button" type="button" data-twenty48-restart>Restart</button></div>
@@ -162,7 +164,7 @@ const slidingMarkup = `
     <header class="topbar">
       <button class="home-button" type="button" data-home aria-label="Return to Ovolar home"><span aria-hidden="true">←</span><span>OVOLAR</span></button>
       <span class="game-title">SLIDING</span>
-      <div class="header-actions"><button class="icon-button" type="button" data-sliding-restart aria-label="New Sliding Puzzle" title="New Sliding Puzzle">↻</button></div>
+      <div class="header-actions"><button id="sliding-theme" class="icon-button theme-cycle-button" type="button" aria-label="Change Sliding Puzzle theme" title="Change theme" hidden>◐</button><button class="icon-button" type="button" data-sliding-restart aria-label="New Sliding Puzzle" title="New Sliding Puzzle">↻</button></div>
     </header>
     <section class="sliding-layout" aria-label="Ovolar Sliding Puzzle game">
       <div class="sliding-stats">
@@ -172,6 +174,7 @@ const slidingMarkup = `
       </div>
       <div class="sliding-frame">
         <div id="sliding-board" class="sliding-board" aria-label="Sliding Puzzle board"></div>
+        <div id="sliding-event" class="game-event" aria-live="polite" hidden></div>
         <div id="sliding-overlay" class="sliding-overlay" hidden><p class="eyebrow">PUZZLE COMPLETE</p><h1>In order.</h1><p id="sliding-result"></p><button class="primary-button" type="button" data-sliding-restart>New puzzle</button></div>
       </div>
       <p class="sliding-hint">Tap a tile beside the open space</p>

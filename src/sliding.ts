@@ -1,9 +1,11 @@
 import { areAdjacent, isSolved, moveTile, shuffledBoard, type SlidingBoard } from './game/sliding';
 import { haptic } from './feedback';
+import { createCosmeticTheme } from './cosmetic-theme';
 import { readStoredNumber, storageKey, writeStoredNumber } from './platform';
 
 const BEST_MOVES_KEY = storageKey('sliding', 'best-moves');
 const BEST_TIME_KEY = storageKey('sliding', 'best-seconds');
+const COMPLETIONS_KEY = storageKey('sliding', 'theme-completions');
 
 const boardElement = document.querySelector<HTMLElement>('#sliding-board')!;
 const movesElement = document.querySelector<HTMLOutputElement>('#sliding-moves')!;
@@ -11,6 +13,8 @@ const bestElement = document.querySelector<HTMLOutputElement>('#sliding-best')!;
 const timeElement = document.querySelector<HTMLOutputElement>('#sliding-time')!;
 const overlay = document.querySelector<HTMLElement>('#sliding-overlay')!;
 const resultElement = document.querySelector<HTMLElement>('#sliding-result')!;
+const themeEvent = document.querySelector<HTMLElement>('#sliding-event')!;
+const themes = createCosmeticTheme(document.querySelector<HTMLButtonElement>('#sliding-theme')!, 'indigo-apricot', (message) => showThemeEvent(message));
 
 let board: SlidingBoard = shuffledBoard();
 let moves = 0;
@@ -18,8 +22,12 @@ let seconds = 0;
 let won = false;
 let bestMoves = readStoredNumber(BEST_MOVES_KEY);
 let bestSeconds = readStoredNumber(BEST_TIME_KEY);
+let completions = readStoredNumber(COMPLETIONS_KEY);
+let themeEventTimer: number | undefined;
 
 const formatTime = (value: number): string => `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`;
+const showThemeEvent = (message: string): void => { themeEvent.textContent = message; themeEvent.hidden = false; if (themeEventTimer !== undefined) window.clearTimeout(themeEventTimer); themeEventTimer = window.setTimeout(() => { themeEvent.hidden = true; }, 1150); };
+const restoreThemeUnlocks = (): void => themes.restore(completions >= 1, completions >= 3);
 
 const renderStats = (): void => {
   movesElement.value = String(moves);
@@ -49,6 +57,9 @@ const render = (animated = false): void => {
 
 const finish = (): void => {
   won = true;
+  completions += 1; writeStoredNumber(COMPLETIONS_KEY, completions);
+  if (completions === 1) themes.unlockThemes();
+  if (completions === 3) themes.unlockShake();
   if (!bestMoves || moves < bestMoves) { bestMoves = moves; writeStoredNumber(BEST_MOVES_KEY, bestMoves); }
   if (!bestSeconds || seconds < bestSeconds) { bestSeconds = seconds; writeStoredNumber(BEST_TIME_KEY, bestSeconds); }
   resultElement.textContent = `${moves} moves · ${formatTime(seconds)}`;
@@ -69,6 +80,7 @@ const tryMove = (index: number): void => {
 };
 
 const restart = (): void => {
+  restoreThemeUnlocks();
   board = shuffledBoard();
   moves = 0;
   seconds = 0;
@@ -99,4 +111,5 @@ window.addEventListener('keydown', (event) => {
 });
 window.setInterval(() => { if (!won && !document.hidden) { seconds += 1; renderStats(); } }, 1000);
 
+restoreThemeUnlocks();
 render();

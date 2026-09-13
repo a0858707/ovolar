@@ -85,6 +85,7 @@ button { -webkit-tap-highlight-color: transparent; }
   touch-action: manipulation;
 }
 .icon-button { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: var(--theme-raised); font-size: 1.55rem; line-height: 1; }
+.theme-cycle-button[hidden] { display: none; }.theme-cycle-button.is-revealed { animation: theme-cycle-reveal .28s ease-out both; } @keyframes theme-cycle-reveal { from { opacity: 0; transform: scale(.82); } to { opacity: 1; transform: scale(1); } }
 .icon-button:active, .control-button:active, .primary-button:active { transform: translateY(1px) scale(.98); }
 .icon-button:focus-visible, .control-button:focus-visible, .primary-button:focus-visible { outline: 3px solid #d4cdff; outline-offset: 3px; }
 .home-button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0; border: 0; color: var(--theme-text); background: transparent; cursor: pointer; font: inherit; font-size: .86rem; font-weight: 700; letter-spacing: .12em; touch-action: manipulation; }
@@ -175,6 +176,7 @@ output { margin-top: 2px; color: var(--theme-text); font-family: 'DM Mono', mono
 .twenty48-hint { margin: 0; color: var(--theme-muted); font-family: 'DM Mono', ui-monospace, monospace; font-size: .72rem; }.twenty48-restart { display: none; }
 .life-notice { min-height: 16px; margin: -4px 0 0; color: var(--theme-accent); font-family: 'DM Mono', ui-monospace, monospace; font-size: .68rem; text-align: center; }
 .life-notice[hidden] { display: none; }
+.game-event { position: absolute; z-index: 1; top: 12px; left: 50%; padding: 7px 10px; border: 1px solid color-mix(in srgb, var(--theme-accent) 58%, var(--theme-border)); border-radius: 9px; color: var(--theme-accent); background: color-mix(in srgb, var(--theme-bg) 88%, transparent); font-family: 'DM Mono', monospace; font-size: .68rem; letter-spacing: .08em; pointer-events: none; transform: translateX(-50%); }.game-event[hidden] { display: none; }
 
 .snake-shell { justify-content: flex-start; }
 .snake-layout { width: min(100%, 400px); margin: 0 auto; display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 14px; min-height: 0; }

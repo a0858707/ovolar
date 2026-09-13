@@ -1,5 +1,6 @@
 import { canMove, createStartingBoard, moveBoard, rescueBoard, type Board, type Direction } from './game/twenty48';
 import { haptic } from './feedback';
+import { createCosmeticTheme } from './cosmetic-theme';
 import { MAX_LIVES, readStoredNumber, renderLives, storageKey, writeStoredNumber } from './platform';
 
 const BEST_KEY = storageKey('2048', 'best');
@@ -14,6 +15,8 @@ const overlayText = document.querySelector<HTMLElement>('#twenty48-overlay-text'
 const continueButton = document.querySelector<HTMLButtonElement>('#twenty48-continue')!;
 const livesElement = document.querySelector<HTMLElement>('#twenty48-lives')!;
 const lifeNotice = document.querySelector<HTMLElement>('#twenty48-life-notice')!;
+const themeEvent = document.querySelector<HTMLElement>('#twenty48-event')!;
+const themes = createCosmeticTheme(document.querySelector<HTMLButtonElement>('#twenty48-theme')!, 'olive-milk', (message) => showThemeEvent(message));
 
 let board: Board = createStartingBoard();
 let score = 0;
@@ -23,6 +26,7 @@ let gameOver = false;
 let movingTimer: number | undefined;
 let lives = MAX_LIVES;
 let lifeNoticeTimer: number | undefined;
+let themeEventTimer: number | undefined;
 
 function readBest(): number { return readStoredNumber(BEST_KEY); }
 
@@ -68,6 +72,18 @@ function showLifeNotice(): void {
   lifeNoticeTimer = window.setTimeout(() => { lifeNotice.hidden = true; }, 1400);
 }
 
+function showThemeEvent(message: string): void {
+  themeEvent.textContent = message; themeEvent.hidden = false;
+  if (themeEventTimer !== undefined) window.clearTimeout(themeEventTimer);
+  themeEventTimer = window.setTimeout(() => { themeEvent.hidden = true; }, 1150);
+}
+
+function updateThemeUnlocks(): void {
+  const highest = Math.max(...board.flat());
+  if (highest >= 256) themes.unlockThemes();
+  if (highest >= 1024) themes.unlockShake();
+}
+
 function move(direction: Direction): void {
   if (gameOver || !overlay.hidden) return;
   const result = moveBoard(board, direction);
@@ -76,6 +92,7 @@ function move(direction: Direction): void {
   score += result.scoreDelta;
   saveBest();
   board = createSpawnedBoard(board);
+  updateThemeUnlocks();
   if (result.created2048 && !wonDismissed) showOverlay('win');
   else if (!canMove(board)) {
     if (lives > 1) {
@@ -86,6 +103,7 @@ function move(direction: Direction): void {
     } else {
       lives = 0;
       gameOver = true;
+      themes.finish();
       haptic('impact');
       showOverlay('over');
     }
@@ -104,6 +122,7 @@ function createSpawnedBoard(current: Board): Board {
 }
 
 function restart(): void {
+  themes.resetRun();
   board = createStartingBoard();
   score = 0;
   wonDismissed = false;

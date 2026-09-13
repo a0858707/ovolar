@@ -4,6 +4,7 @@ import { findClockwiseRotation, type Matrix } from './game/rotation';
 import { TouchRepeater, type RepeatScheduler } from './game/touch-repeat';
 import { rescueBlockBoard } from './game/block-rescue';
 import { haptic } from './feedback';
+import { createCosmeticTheme } from './cosmetic-theme';
 import { MAX_LIVES, renderLives } from './platform';
 import './style.css';
 
@@ -354,8 +355,9 @@ const finalBest = document.querySelector<HTMLElement>('#final-best')!;
 const pauseOverlay = document.querySelector<HTMLElement>('#pause-overlay')!;
 const pauseButton = document.querySelector<HTMLButtonElement>('#pause-button')!;
 const nextPiece = document.querySelector<HTMLElement>('#next-piece')!;
-const lineClear = document.querySelector<HTMLElement>('#line-clear')!;
 const lives = document.querySelector<HTMLElement>('#block-lives')!;
+const lineClear = document.querySelector<HTMLElement>('#line-clear')!;
+const themes = createCosmeticTheme(document.querySelector<HTMLButtonElement>('#block-theme')!, 'aubergine-lime', (message) => showBlockEvent(message));
 
 const colorToCss = (color: number): string => `#${color.toString(16).padStart(6, '0')}`;
 
@@ -389,19 +391,21 @@ window.addEventListener('ovolar-block-state', ((event: CustomEvent<GameState>) =
   finalScore.textContent = String(state.score);
   finalBest.textContent = String(state.best);
   renderNextPiece(state.next);
+  if (state.score === 0 && state.lines === 0 && state.level === 1 && state.lives === MAX_LIVES) themes.resetRun();
+  else if (state.over) themes.finish();
+  else { if (state.level >= 3) themes.unlockThemes(); if (state.level >= 6) themes.unlockShake(); }
 }) as EventListener);
 
 let lineClearTimer: number | undefined;
+const showBlockEvent = (message: string): void => {
+  lineClear.textContent = message; lineClear.hidden = false; lineClear.classList.remove('show'); void lineClear.offsetWidth; lineClear.classList.add('show');
+  if (lineClearTimer !== undefined) window.clearTimeout(lineClearTimer);
+  lineClearTimer = window.setTimeout(() => { lineClear.hidden = true; }, 1150);
+};
 window.addEventListener('ovolar-block-line-clear', ((event: CustomEvent<LineClearEvent>) => {
   const { lines: cleared, points } = event.detail;
   const label = cleared === 4 ? 'TETRIS' : `${cleared} LINE${cleared === 1 ? '' : 'S'}`;
-  lineClear.textContent = `${label} +${points}`;
-  lineClear.hidden = false;
-  lineClear.classList.remove('show');
-  void lineClear.offsetWidth;
-  lineClear.classList.add('show');
-  if (lineClearTimer !== undefined) window.clearTimeout(lineClearTimer);
-  lineClearTimer = window.setTimeout(() => { lineClear.hidden = true; }, 850);
+  showBlockEvent(`${label} +${points}`);
 }) as EventListener);
 
 const dispatchAction = (action: Action): void => {
