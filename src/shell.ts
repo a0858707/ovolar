@@ -142,7 +142,7 @@ const snakeMarkup = `
     <header class="topbar">
       <button class="home-button" type="button" data-home aria-label="Return to Ovolar home"><span aria-hidden="true">←</span><span>OVOLAR</span></button>
       <span class="game-title">SNAKE</span>
-      <div class="header-actions"><button id="snake-pause" class="icon-button" type="button" aria-label="Pause game" title="Pause game">Ⅱ</button><button class="icon-button" type="button" data-snake-restart aria-label="Restart Snake" title="Restart Snake">↻</button></div>
+      <div class="header-actions"><button id="snake-theme" class="icon-button snake-theme-button" type="button" aria-label="Change Snake theme" title="Change theme" hidden>◐</button><button id="snake-pause" class="icon-button" type="button" aria-label="Pause game" title="Pause game">Ⅱ</button><button class="icon-button" type="button" data-snake-restart aria-label="Restart Snake" title="Restart Snake">↻</button></div>
     </header>
     <section class="snake-layout" aria-label="Ovolar Snake game">
       <div class="snake-stats"><div class="score-card main-score"><span class="label">Score</span><output id="snake-score">0</output></div><div class="score-card"><span class="label">Best</span><output id="snake-best">0</output></div>${livesMarkup('snake-lives')}</div>
