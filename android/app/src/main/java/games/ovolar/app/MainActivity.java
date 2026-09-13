@@ -12,7 +12,7 @@ public class MainActivity extends BridgeActivity {
             @Override
             public void handleOnBackPressed() {
                 getBridge().getWebView().evaluateJavascript(
-                    "window.location.hash === '#/block'", result -> {
+                    "window.location.hash !== '' && window.location.hash !== '#/'", result -> {
                         if ("true".equals(result)) {
                             getBridge().getWebView().evaluateJavascript(
                                 "window.location.replace('#/')", null);

@@ -1,6 +1,6 @@
 import './style.css';
 
-type Route = 'home' | 'block' | '2048';
+type Route = 'home' | 'block' | '2048' | 'snake';
 
 const app = document.querySelector<HTMLElement>('#app');
 
@@ -35,13 +35,13 @@ const homeMarkup = `
         <button class="primary-button card-play" type="button" data-open-2048>Play <span aria-hidden="true">→</span></button>
       </article>
 
-      <article class="game-card coming-soon-card" aria-label="Ovolar Snake, coming soon">
+      <article class="game-card snake-card">
         <span class="game-card-icon" aria-hidden="true">⌁</span>
         <div class="game-card-copy">
           <h1>Ovolar Snake</h1>
           <p>Eat. Grow. Don’t crash.</p>
         </div>
-        <span class="coming-soon">Coming soon</span>
+        <button class="primary-button card-play" type="button" data-open-snake>Play <span aria-hidden="true">→</span></button>
       </article>
     </section>
   </main>
@@ -138,7 +138,26 @@ const twenty48Markup = `
   </main>
 `;
 
-const route: Route = window.location.hash === '#/block' ? 'block' : window.location.hash === '#/2048' ? '2048' : 'home';
+const snakeMarkup = `
+  <main class="app-shell snake-shell">
+    <header class="topbar">
+      <button class="home-button" type="button" data-home aria-label="Return to Ovolar home"><span aria-hidden="true">←</span><span>OVOLAR</span></button>
+      <span class="game-title">SNAKE</span>
+      <div class="header-actions"><button id="snake-pause" class="icon-button" type="button" aria-label="Pause game" title="Pause game">Ⅱ</button><button class="icon-button" type="button" data-snake-restart aria-label="Restart Snake" title="Restart Snake">↻</button></div>
+    </header>
+    <section class="snake-layout" aria-label="Ovolar Snake game">
+      <div class="snake-stats"><div class="score-card main-score"><span class="label">Score</span><output id="snake-score">0</output></div><div class="score-card"><span class="label">Best</span><output id="snake-best">0</output></div></div>
+      <div class="snake-frame">
+        <div id="snake-board" class="snake-board" aria-label="Snake board"></div>
+        <div id="snake-overlay" class="snake-overlay" hidden><p class="eyebrow">OVOLAR SNAKE</p><h1 id="snake-overlay-title"></h1><p id="snake-overlay-text"></p><div class="snake-overlay-actions"><button id="snake-resume" class="primary-button" type="button">Resume</button><button class="secondary-button" type="button" data-snake-restart>Restart</button></div></div>
+      </div>
+      <p class="snake-hint">Swipe to steer</p>
+      <button class="secondary-button snake-restart" type="button" data-snake-restart>Restart</button>
+    </section>
+  </main>
+`;
+
+const route: Route = window.location.hash === '#/block' ? 'block' : window.location.hash === '#/2048' ? '2048' : window.location.hash === '#/snake' ? 'snake' : 'home';
 document.body.dataset.route = route;
 
 if (route === 'home') {
@@ -150,14 +169,17 @@ if (route === 'home') {
   app.querySelector<HTMLButtonElement>('[data-open-2048]')?.addEventListener('click', () => {
     window.location.hash = '#/2048';
   });
+  app.querySelector<HTMLButtonElement>('[data-open-snake]')?.addEventListener('click', () => {
+    window.location.hash = '#/snake';
+  });
 } else {
-  document.title = route === 'block' ? 'Ovolar Block' : 'Ovolar 2048';
-  app.innerHTML = route === 'block' ? blockMarkup : twenty48Markup;
+  document.title = route === 'block' ? 'Ovolar Block' : route === '2048' ? 'Ovolar 2048' : 'Ovolar Snake';
+  app.innerHTML = route === 'block' ? blockMarkup : route === '2048' ? twenty48Markup : snakeMarkup;
   app.querySelector<HTMLButtonElement>('[data-home]')?.addEventListener('click', () => {
     window.history.replaceState(null, '', '#/');
     window.location.reload();
   });
-  void import(route === 'block' ? './main' : './twenty48');
+  void import(route === 'block' ? './main' : route === '2048' ? './twenty48' : './snake');
 }
 
 window.addEventListener('hashchange', () => window.location.reload());
