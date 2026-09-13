@@ -1,10 +1,24 @@
 import './style.css';
 import { categories, gameByRoute, gameRegistry } from './game-registry';
-import { goHome, livesMarkup } from './platform';
+import { goHome, livesMarkup, readStoredNumber } from './platform';
 
 const app = document.querySelector<HTMLElement>('#app');
 
 if (!app) throw new Error('Ovolar app root is missing.');
+
+const visualMarkup = (id: string, icon: string): string => {
+  if (id === 'block') return '<span class="card-visual block-visual" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>';
+  if (id === 'snake') return '<span class="card-visual snake-visual" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><b></b></span>';
+  if (id === '2048') return '<span class="card-visual twenty48-visual" aria-hidden="true"><i>2</i><i>4</i><i>8</i><i>16</i></span>';
+  return `<span class="card-visual future-visual" aria-hidden="true">${icon}</span>`;
+};
+
+const gameCardMarkup = (game: typeof gameRegistry[number]): string => {
+  const best = game.bestScoreKey ? readStoredNumber(game.bestScoreKey) : 0;
+  const content = `${visualMarkup(game.id, game.icon)}<span class="game-card-copy"><span class="card-kicker">${game.category}</span><span class="card-title">${game.title}</span><span class="card-description">${game.description}</span></span>`;
+  if (game.status === 'playable') return `<article class="game-entry"><button class="game-card playable-card" type="button" data-game-route="${game.route}" data-theme="${game.theme}" aria-label="Play ${game.title}">${content}<span class="card-best"><small>Best</small><strong>${best}</strong></span><span class="card-affordance">Play <b aria-hidden="true">→</b></span></button></article>`;
+  return `<article class="game-entry"><div class="game-card coming-soon-card" data-theme="${game.theme}">${content}<span class="coming-soon"><b aria-hidden="true">⌁</b> Coming soon</span></div></article>`;
+};
 
 const homeMarkup = (): string => `
   <main class="app-shell home-shell">
@@ -13,7 +27,7 @@ const homeMarkup = (): string => `
         <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
         <span>OVOLAR</span>
       </div>
-      <p>Pick a game</p>
+      <p>Small games. Good feel.</p>
     </header>
 
     <div class="library" aria-label="Games">
@@ -21,11 +35,7 @@ const homeMarkup = (): string => `
         const games = gameRegistry.filter((game) => game.category === category);
         return `<section class="library-section" aria-labelledby="category-${category.replace(/ /g, '-').toLowerCase()}">
           <h1 id="category-${category.replace(/ /g, '-').toLowerCase()}" class="category-title">${category}</h1>
-          <div class="game-cards">${games.map((game) => `<article class="game-card ${game.status === 'coming-soon' ? 'coming-soon-card' : ''}" data-theme="${game.theme}">
-            <span class="game-card-icon" aria-hidden="true">${game.icon}</span>
-            <div class="game-card-copy"><h2>${game.title}</h2><p>${game.description}</p></div>
-            ${game.status === 'playable' ? `<button class="primary-button card-play" type="button" data-game-route="${game.route}">Play <span aria-hidden="true">→</span></button>` : '<span class="coming-soon">Coming soon</span>'}
-          </article>`).join('')}</div>
+          <div class="game-cards">${games.map(gameCardMarkup).join('')}</div>
         </section>`;
       }).join('')}
     </div>
