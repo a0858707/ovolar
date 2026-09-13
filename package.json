@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
+    "snake:simulate": "tsc src/game/snake.ts src/game/snake-sim.ts --target ES2022 --module NodeNext --moduleResolution NodeNext --outDir .tmp/snake-sim && node .tmp/snake-sim/snake-sim.js",
     "android:sync": "npm run build && npx cap sync android",
     "android:debug": "npm run android:sync && cd android && ./gradlew assembleDebug"
   },

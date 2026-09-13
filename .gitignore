@@ -12,4 +12,5 @@ android/**/*.keystore
 android/keystore.properties
 .gradle/
 .idea/
+.tmp/
 *.iml

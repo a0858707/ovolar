@@ -1,18 +1,10 @@
-import {
-  GRID_SIZE,
-  canQueueDirection,
-  initialSnake,
-  spawnFood,
-  speedForScore,
-  stepSnake,
-  type Direction,
-} from './game/snake';
+import { MAX_SNAKE_LIVES, START_ARENA, canQueueDirection, desiredObstacleCount, expandedArena, initialSnake, safeRespawnSnake, spawnFood, spawnObstacle, speedForScore, stepSnake, type Arena, type Direction, type Point } from './game/snake';
 import { haptic } from './feedback';
-import { MAX_LIVES, pauseWhenBackgrounded, readStoredNumber, renderLives, storageKey, writeStoredNumber } from './platform';
+import { pauseWhenBackgrounded, readStoredNumber, renderLives, storageKey, writeStoredNumber } from './platform';
 
 const BEST_KEY = storageKey('snake', 'best');
 const SWIPE_DISTANCE = 24;
-
+const LIFE_INTERVAL_MIN = 12;
 const boardElement = document.querySelector<HTMLElement>('#snake-board')!;
 const scoreElement = document.querySelector<HTMLOutputElement>('#snake-score')!;
 const bestElement = document.querySelector<HTMLOutputElement>('#snake-best')!;
@@ -22,185 +14,57 @@ const overlayText = document.querySelector<HTMLElement>('#snake-overlay-text')!;
 const resumeButton = document.querySelector<HTMLButtonElement>('#snake-resume')!;
 const pauseButton = document.querySelector<HTMLButtonElement>('#snake-pause')!;
 const livesElement = document.querySelector<HTMLElement>('#snake-lives')!;
+const eventElement = document.querySelector<HTMLElement>('#snake-event')!;
 
-let snake = initialSnake();
-let food = spawnFood(snake)!;
-let direction: Direction = 'right';
-let queuedDirection: Direction = 'right';
-let score = 0;
-let best = readBest();
-let gameOver = false;
-let paused = false;
-let timer: number | undefined;
-let lives = MAX_LIVES;
-
-function readBest(): number { return readStoredNumber(BEST_KEY); }
-
-function saveBest(): void {
-  if (score <= best) return;
-  best = score;
-  writeStoredNumber(BEST_KEY, best);
-}
+let arena: Arena = START_ARENA; let snake = initialSnake(arena); let obstacles: Point[] = []; let life: Point | undefined;
+let food = spawnFood(snake, arena, obstacles)!; let direction: Direction = 'right'; let queuedDirection: Direction = 'right';
+let score = 0; let best = readStoredNumber(BEST_KEY); let gameOver = false; let paused = false; let timer: number | undefined;
+let lives = 3; let ticks = 0; let lifeExpiresAt = 0; let nextLifeAt = 12; let eventTimer: number | undefined;
+const showEvent = (message: string): void => { eventElement.textContent = message; eventElement.hidden = false; if (eventTimer) window.clearTimeout(eventTimer); eventTimer = window.setTimeout(() => { eventElement.hidden = true; }, 1150); };
+const saveBest = (): void => { if (score > best) { best = score; writeStoredNumber(BEST_KEY, best); } };
+const stopTimer = (): void => { if (timer) window.clearInterval(timer); timer = undefined; };
+const startTimer = (): void => { stopTimer(); if (!paused && !gameOver) timer = window.setInterval(tick, speedForScore(score)); };
+const showOverlay = (title: string, text: string, canResume: boolean): void => { overlay.hidden = false; overlayTitle.textContent = title; overlayText.textContent = text; resumeButton.hidden = !canResume; };
+const hideOverlay = (): void => { overlay.hidden = true; };
 
 function render(): void {
-  const segments = new Set(snake.map(({ x, y }) => `${x},${y}`));
-  const head = snake[0];
-  boardElement.replaceChildren(...Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, index) => {
-    const x = index % GRID_SIZE;
-    const y = Math.floor(index / GRID_SIZE);
-    const cell = document.createElement('span');
-    cell.className = 'snake-cell';
-    if (head.x === x && head.y === y) cell.classList.add('snake-head');
-    else if (segments.has(`${x},${y}`)) cell.classList.add('snake-body');
-    else if (food.x === x && food.y === y) cell.classList.add('snake-food');
+  const body = new Set(snake.map(({ x, y }) => `${x},${y}`)); const obstacleSet = new Set(obstacles.map(({ x, y }) => `${x},${y}`)); const head = snake[0];
+  boardElement.style.gridTemplateColumns = `repeat(${arena.size}, 1fr)`; boardElement.style.gridTemplateRows = `repeat(${arena.size}, 1fr)`;
+  boardElement.replaceChildren(...Array.from({ length: arena.size * arena.size }, (_, index) => {
+    const point = { x: index % arena.size, y: Math.floor(index / arena.size) }; const cell = document.createElement('span'); cell.className = 'snake-cell';
+    if (head.x === point.x && head.y === point.y) cell.classList.add('snake-head'); else if (body.has(`${point.x},${point.y}`)) cell.classList.add('snake-body'); else if (obstacleSet.has(`${point.x},${point.y}`)) cell.classList.add('snake-obstacle'); else if (food.x === point.x && food.y === point.y) cell.classList.add('snake-food'); else if (life?.x === point.x && life?.y === point.y) cell.classList.add('snake-life');
     return cell;
   }));
-  scoreElement.value = String(score);
-  bestElement.value = String(best);
-  renderLives(livesElement, lives);
+  scoreElement.value = String(score); bestElement.value = String(best); renderLives(livesElement, lives, MAX_SNAKE_LIVES);
 }
-
-function stopTimer(): void {
-  if (timer !== undefined) window.clearInterval(timer);
-  timer = undefined;
+function pause(): void { if (paused || gameOver) return; paused = true; stopTimer(); pauseButton.textContent = '▶'; pauseButton.setAttribute('aria-label', 'Resume game'); showOverlay('Paused.', 'Your run is waiting.', true); }
+function resume(): void { if (!paused || gameOver) return; paused = false; pauseButton.textContent = 'Ⅱ'; pauseButton.setAttribute('aria-label', 'Pause game'); hideOverlay(); startTimer(); }
+function respawnAfterLifeLoss(): void { snake = safeRespawnSnake(arena, obstacles, food, life); direction = 'right'; queuedDirection = 'right'; paused = true; pauseButton.textContent = '▶'; pauseButton.setAttribute('aria-label', 'Resume game'); showOverlay('Life saved.', 'Arena and score preserved.', true); showEvent('LIFE LOST'); render(); }
+function eatFood(): void {
+  score += 1; saveBest(); haptic('confirm');
+  const expanded = expandedArena(arena, snake, food, obstacles, life, score); arena = expanded.arena; snake = expanded.snake; food = expanded.food; obstacles = expanded.obstacles; life = expanded.life;
+  if (expanded.expanded) showEvent('ARENA EXPANDED');
+  while (obstacles.length < desiredObstacleCount(score, arena)) { const next = spawnObstacle(snake, food, life, arena, obstacles); if (next.length === obstacles.length) break; obstacles = next; }
+  if (!life && lives < MAX_SNAKE_LIVES && score >= nextLifeAt) { life = spawnFood(snake, arena, obstacles); if (life) { lifeExpiresAt = ticks + 115; nextLifeAt = score + LIFE_INTERVAL_MIN + Math.floor(Math.random() * 7); } }
+  const nextFood = spawnFood(snake, arena, obstacles, life);
+  if (!nextFood) { gameOver = true; stopTimer(); showOverlay('Arena cleared.', 'A perfect run.', false); return; }
+  food = nextFood; startTimer();
 }
-
-function startTimer(): void {
-  stopTimer();
-  if (!paused && !gameOver) timer = window.setInterval(tick, speedForScore(score));
-}
-
-function showOverlay(title: string, text: string, canResume: boolean): void {
-  overlay.hidden = false;
-  overlayTitle.textContent = title;
-  overlayText.textContent = text;
-  resumeButton.hidden = !canResume;
-}
-
-function hideOverlay(): void { overlay.hidden = true; }
-
-function pause(): void {
-  if (paused || gameOver) return;
-  paused = true;
-  stopTimer();
-  pauseButton.textContent = '▶';
-  pauseButton.setAttribute('aria-label', 'Resume game');
-  showOverlay('Paused.', 'Your run is waiting.', true);
-}
-
-function resume(): void {
-  if (!paused || gameOver) return;
-  paused = false;
-  pauseButton.textContent = 'Ⅱ';
-  pauseButton.setAttribute('aria-label', 'Pause game');
-  hideOverlay();
-  startTimer();
-}
-
 function tick(): void {
-  direction = queuedDirection;
-  const result = stepSnake(snake, direction, food);
-  if (result.collision) {
-    stopTimer();
-    haptic('impact');
-    if (lives > 1) {
-      lives -= 1;
-      respawnAfterLifeLoss();
-    } else {
-      lives = 0;
-      gameOver = true;
-      showOverlay('Run over.', result.collision === 'wall' ? 'The edge got you.' : 'You ran into yourself.', false);
-      render();
-    }
-    return;
-  }
+  direction = queuedDirection; ticks += 1; if (life && ticks >= lifeExpiresAt) life = undefined;
+  const result = stepSnake(snake, direction, food, arena, obstacles);
+  if (result.collision) { stopTimer(); haptic('impact'); if (lives > 1) { lives -= 1; respawnAfterLifeLoss(); } else { lives = 0; gameOver = true; saveBest(); showOverlay('Run over.', result.collision === 'obstacle' ? 'An obstacle stopped the run.' : 'You ran into yourself.', false); render(); } return; }
   snake = result.snake;
-  if (result.ate) {
-    score += 1;
-    saveBest();
-    haptic('confirm');
-    const nextFood = spawnFood(snake);
-    if (!nextFood) {
-      gameOver = true;
-      stopTimer();
-      showOverlay('Board cleared.', 'A perfect run.', false);
-    } else {
-      food = nextFood;
-      startTimer();
-    }
-  }
-  render();
+  if (life && snake[0].x === life.x && snake[0].y === life.y) { if (lives < MAX_SNAKE_LIVES) { lives += 1; haptic('success'); showEvent('+1 LIFE'); } life = undefined; }
+  if (result.ate) eatFood(); render();
 }
-
-function respawnAfterLifeLoss(): void {
-  snake = initialSnake();
-  food = spawnFood(snake)!;
-  direction = 'right';
-  queuedDirection = 'right';
-  paused = true;
-  pauseButton.textContent = '▶';
-  pauseButton.setAttribute('aria-label', 'Resume game');
-  showOverlay('Life saved.', 'Ready when you are.', true);
-  render();
-}
-
-function requestDirection(next: Direction): void {
-  if (gameOver || paused || !canQueueDirection(direction, queuedDirection, next)) return;
-  queuedDirection = next;
-}
-
-function restart(): void {
-  stopTimer();
-  snake = initialSnake();
-  food = spawnFood(snake)!;
-  direction = 'right';
-  queuedDirection = 'right';
-  score = 0;
-  gameOver = false;
-  paused = false;
-  lives = MAX_LIVES;
-  pauseButton.textContent = 'Ⅱ';
-  pauseButton.setAttribute('aria-label', 'Pause game');
-  hideOverlay();
-  render();
-  startTimer();
-}
-
-document.querySelectorAll<HTMLButtonElement>('[data-snake-restart]').forEach((button) => button.addEventListener('click', restart));
-resumeButton.addEventListener('click', resume);
-pauseButton.addEventListener('click', () => { if (paused) resume(); else pause(); });
-
-window.addEventListener('keydown', (event) => {
-  const directionByKey: Record<string, Direction | undefined> = {
-    ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
-    a: 'left', d: 'right', w: 'up', s: 'down', A: 'left', D: 'right', W: 'up', S: 'down',
-  };
-  const next = directionByKey[event.key];
-  if (!next) return;
-  event.preventDefault();
-  requestDirection(next);
-});
-
+function requestDirection(next: Direction): void { if (!gameOver && !paused && canQueueDirection(direction, queuedDirection, next)) queuedDirection = next; }
+function restart(): void { stopTimer(); arena = START_ARENA; snake = initialSnake(arena); obstacles = []; life = undefined; food = spawnFood(snake, arena, obstacles)!; direction = 'right'; queuedDirection = 'right'; score = 0; lives = 3; ticks = 0; nextLifeAt = 12 + Math.floor(Math.random() * 7); gameOver = false; paused = false; pauseButton.textContent = 'Ⅱ'; pauseButton.setAttribute('aria-label', 'Pause game'); hideOverlay(); render(); startTimer(); }
+document.querySelectorAll<HTMLButtonElement>('[data-snake-restart]').forEach((button) => button.addEventListener('click', restart)); resumeButton.addEventListener('click', resume); pauseButton.addEventListener('click', () => { if (paused) resume(); else pause(); });
+window.addEventListener('keydown', (event) => { const keys: Record<string, Direction | undefined> = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', a: 'left', d: 'right', w: 'up', s: 'down', A: 'left', D: 'right', W: 'up', S: 'down' }; if (keys[event.key]) { event.preventDefault(); requestDirection(keys[event.key]!); } });
 let swipeStart: { x: number; y: number; pointerId: number } | undefined;
-boardElement.addEventListener('pointerdown', (event) => {
-  if (event.pointerType !== 'touch') return;
-  event.preventDefault();
-  boardElement.setPointerCapture(event.pointerId);
-  swipeStart = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
-}, { passive: false });
+boardElement.addEventListener('pointerdown', (event) => { if (event.pointerType !== 'touch') return; event.preventDefault(); boardElement.setPointerCapture(event.pointerId); swipeStart = { x: event.clientX, y: event.clientY, pointerId: event.pointerId }; }, { passive: false });
 boardElement.addEventListener('pointermove', (event) => { if (swipeStart) event.preventDefault(); }, { passive: false });
-boardElement.addEventListener('pointerup', (event) => {
-  if (!swipeStart || event.pointerId !== swipeStart.pointerId) return;
-  event.preventDefault();
-  const dx = event.clientX - swipeStart.x;
-  const dy = event.clientY - swipeStart.y;
-  swipeStart = undefined;
-  if (Math.max(Math.abs(dx), Math.abs(dy)) < SWIPE_DISTANCE) return;
-  requestDirection(Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down'));
-}, { passive: false });
-boardElement.addEventListener('pointercancel', () => { swipeStart = undefined; });
-
-pauseWhenBackgrounded(pause);
-
-render();
-startTimer();
+boardElement.addEventListener('pointerup', (event) => { if (!swipeStart || event.pointerId !== swipeStart.pointerId) return; event.preventDefault(); const dx = event.clientX - swipeStart.x; const dy = event.clientY - swipeStart.y; swipeStart = undefined; if (Math.max(Math.abs(dx), Math.abs(dy)) >= SWIPE_DISTANCE) requestDirection(Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down')); }, { passive: false });
+boardElement.addEventListener('pointercancel', () => { swipeStart = undefined; }); pauseWhenBackgrounded(pause);
+restart();

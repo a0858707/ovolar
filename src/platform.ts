@@ -30,8 +30,8 @@ export const pauseWhenBackgrounded = (pause: () => void): (() => void) => {
 
 export const livesMarkup = (id: string): string => `<div class="lives-card"><span class="label">Lives</span><span id="${id}" class="life-pips" aria-label="3 lives remaining"></span></div>`;
 
-export const renderLives = (element: HTMLElement, lives: number): void => {
-  element.replaceChildren(...Array.from({ length: MAX_LIVES }, (_, index) => {
+export const renderLives = (element: HTMLElement, lives: number, maximum = MAX_LIVES): void => {
+  element.replaceChildren(...Array.from({ length: maximum }, (_, index) => {
     const pip = document.createElement('i');
     pip.className = `life-pip${index < lives ? ' is-active' : ''}`;
     pip.setAttribute('aria-hidden', 'true');

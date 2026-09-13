@@ -148,6 +148,7 @@ const snakeMarkup = `
       <div class="snake-stats"><div class="score-card main-score"><span class="label">Score</span><output id="snake-score">0</output></div><div class="score-card"><span class="label">Best</span><output id="snake-best">0</output></div>${livesMarkup('snake-lives')}</div>
       <div class="snake-frame">
         <div id="snake-board" class="snake-board" aria-label="Snake board"></div>
+        <div id="snake-event" class="snake-event" aria-live="polite" hidden></div>
         <div id="snake-overlay" class="snake-overlay" hidden><p class="eyebrow">OVOLAR SNAKE</p><h1 id="snake-overlay-title"></h1><p id="snake-overlay-text"></p><div class="snake-overlay-actions"><button id="snake-resume" class="primary-button" type="button">Resume</button><button class="secondary-button" type="button" data-snake-restart>Restart</button></div></div>
       </div>
       <p class="snake-hint">Swipe to steer</p>
