@@ -27,12 +27,19 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - name: Build private tester artifact
         env:
-          VITE_BASE_PATH: /ovolar/
+          OVOLAR_TEST_PATH: ${{ secrets.OVOLAR_TEST_PATH }}
+        run: |
+          test -n "$OVOLAR_TEST_PATH"
+          VITE_BASE_PATH="/ovolar/${OVOLAR_TEST_PATH}/" npm run build
+          mkdir -p "_site/${OVOLAR_TEST_PATH}"
+          cp -R dist/. "_site/${OVOLAR_TEST_PATH}/"
+          printf '%s\n' '<!doctype html><title>Not found</title><p>Not found</p>' > _site/index.html
+          printf 'User-agent: *\nDisallow: /\n' > _site/robots.txt
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4
