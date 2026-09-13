@@ -1,6 +1,7 @@
 import { canMove, createStartingBoard, moveBoard, type Board, type Direction } from './game/twenty48';
+import { readStoredNumber, storageKey, writeStoredNumber } from './platform';
 
-const BEST_KEY = 'ovolar.2048.best';
+const BEST_KEY = storageKey('2048', 'best');
 const SWIPE_DISTANCE = 28;
 
 const boardElement = document.querySelector<HTMLElement>('#twenty48-board')!;
@@ -18,14 +19,12 @@ let wonDismissed = false;
 let gameOver = false;
 let movingTimer: number | undefined;
 
-function readBest(): number {
-  try { return Number.parseInt(localStorage.getItem(BEST_KEY) ?? '0', 10) || 0; } catch { return 0; }
-}
+function readBest(): number { return readStoredNumber(BEST_KEY); }
 
 function saveBest(): void {
   if (score <= best) return;
   best = score;
-  try { localStorage.setItem(BEST_KEY, String(best)); } catch { /* Local play still works without storage. */ }
+  writeStoredNumber(BEST_KEY, best);
 }
 
 function render(animated = false): void {

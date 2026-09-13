@@ -1,12 +1,12 @@
 import './style.css';
-
-type Route = 'home' | 'block' | '2048' | 'snake';
+import { categories, gameByRoute, gameRegistry } from './game-registry';
+import { goHome } from './platform';
 
 const app = document.querySelector<HTMLElement>('#app');
 
 if (!app) throw new Error('Ovolar app root is missing.');
 
-const homeMarkup = `
+const homeMarkup = (): string => `
   <main class="app-shell home-shell">
     <header class="home-header">
       <div class="brand" aria-label="Ovolar">
@@ -16,34 +16,19 @@ const homeMarkup = `
       <p>Pick a game</p>
     </header>
 
-    <section class="game-cards" aria-label="Games">
-      <article class="game-card block-card">
-        <span class="game-card-icon" aria-hidden="true">▦</span>
-        <div class="game-card-copy">
-          <h1>Ovolar Block</h1>
-          <p>Classic falling-block puzzle</p>
-        </div>
-        <button class="primary-button card-play" type="button" data-open-block>Play <span aria-hidden="true">→</span></button>
-      </article>
-
-      <article class="game-card twenty48-card">
-        <span class="game-card-icon" aria-hidden="true">2048</span>
-        <div class="game-card-copy">
-          <h1>Ovolar 2048</h1>
-          <p>Merge tiles. Reach 2048.</p>
-        </div>
-        <button class="primary-button card-play" type="button" data-open-2048>Play <span aria-hidden="true">→</span></button>
-      </article>
-
-      <article class="game-card snake-card">
-        <span class="game-card-icon" aria-hidden="true">⌁</span>
-        <div class="game-card-copy">
-          <h1>Ovolar Snake</h1>
-          <p>Eat. Grow. Don’t crash.</p>
-        </div>
-        <button class="primary-button card-play" type="button" data-open-snake>Play <span aria-hidden="true">→</span></button>
-      </article>
-    </section>
+    <div class="library" aria-label="Games">
+      ${categories.map((category) => {
+        const games = gameRegistry.filter((game) => game.category === category);
+        return `<section class="library-section" aria-labelledby="category-${category.replace(/ /g, '-').toLowerCase()}">
+          <h1 id="category-${category.replace(/ /g, '-').toLowerCase()}" class="category-title">${category}</h1>
+          <div class="game-cards">${games.map((game) => `<article class="game-card ${game.status === 'coming-soon' ? 'coming-soon-card' : ''}" data-theme="${game.theme}">
+            <span class="game-card-icon" aria-hidden="true">${game.icon}</span>
+            <div class="game-card-copy"><h2>${game.title}</h2><p>${game.description}</p></div>
+            ${game.status === 'playable' ? `<button class="primary-button card-play" type="button" data-game-route="${game.route}">Play <span aria-hidden="true">→</span></button>` : '<span class="coming-soon">Coming soon</span>'}
+          </article>`).join('')}</div>
+        </section>`;
+      }).join('')}
+    </div>
   </main>
 `;
 
@@ -157,29 +142,22 @@ const snakeMarkup = `
   </main>
 `;
 
-const route: Route = window.location.hash === '#/block' ? 'block' : window.location.hash === '#/2048' ? '2048' : window.location.hash === '#/snake' ? 'snake' : 'home';
-document.body.dataset.route = route;
+const activeGame = gameByRoute(window.location.hash);
+document.body.dataset.route = activeGame?.id ?? 'home';
 
-if (route === 'home') {
+if (!activeGame) {
   document.title = 'Ovolar';
-  app.innerHTML = homeMarkup;
-  app.querySelector<HTMLButtonElement>('[data-open-block]')?.addEventListener('click', () => {
-    window.location.hash = '#/block';
-  });
-  app.querySelector<HTMLButtonElement>('[data-open-2048]')?.addEventListener('click', () => {
-    window.location.hash = '#/2048';
-  });
-  app.querySelector<HTMLButtonElement>('[data-open-snake]')?.addEventListener('click', () => {
-    window.location.hash = '#/snake';
+  app.innerHTML = homeMarkup();
+  app.querySelectorAll<HTMLButtonElement>('[data-game-route]').forEach((button) => {
+    button.addEventListener('click', () => { window.location.hash = button.dataset.gameRoute!; });
   });
 } else {
-  document.title = route === 'block' ? 'Ovolar Block' : route === '2048' ? 'Ovolar 2048' : 'Ovolar Snake';
-  app.innerHTML = route === 'block' ? blockMarkup : route === '2048' ? twenty48Markup : snakeMarkup;
+  document.title = activeGame.title;
+  app.innerHTML = activeGame.id === 'block' ? blockMarkup : activeGame.id === '2048' ? twenty48Markup : snakeMarkup;
   app.querySelector<HTMLButtonElement>('[data-home]')?.addEventListener('click', () => {
-    window.history.replaceState(null, '', '#/');
-    window.location.reload();
+    goHome();
   });
-  void import(route === 'block' ? './main' : route === '2048' ? './twenty48' : './snake');
+  void activeGame.load?.();
 }
 
 window.addEventListener('hashchange', () => window.location.reload());

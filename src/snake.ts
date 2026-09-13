@@ -7,8 +7,10 @@ import {
   stepSnake,
   type Direction,
 } from './game/snake';
+import { haptic } from './feedback';
+import { pauseWhenBackgrounded, readStoredNumber, storageKey, writeStoredNumber } from './platform';
 
-const BEST_KEY = 'ovolar.snake.best';
+const BEST_KEY = storageKey('snake', 'best');
 const SWIPE_DISTANCE = 24;
 
 const boardElement = document.querySelector<HTMLElement>('#snake-board')!;
@@ -30,14 +32,12 @@ let gameOver = false;
 let paused = false;
 let timer: number | undefined;
 
-function readBest(): number {
-  try { return Number.parseInt(localStorage.getItem(BEST_KEY) ?? '0', 10) || 0; } catch { return 0; }
-}
+function readBest(): number { return readStoredNumber(BEST_KEY); }
 
 function saveBest(): void {
   if (score <= best) return;
   best = score;
-  try { localStorage.setItem(BEST_KEY, String(best)); } catch { /* The game remains playable without storage. */ }
+  writeStoredNumber(BEST_KEY, best);
 }
 
 function render(): void {
@@ -100,6 +100,7 @@ function tick(): void {
   if (result.collision) {
     gameOver = true;
     stopTimer();
+    haptic('impact');
     showOverlay('Run over.', result.collision === 'wall' ? 'The edge got you.' : 'You ran into yourself.', false);
     return;
   }
@@ -107,6 +108,7 @@ function tick(): void {
   if (result.ate) {
     score += 1;
     saveBest();
+    haptic('confirm');
     const nextFood = spawnFood(snake);
     if (!nextFood) {
       gameOver = true;
@@ -175,9 +177,7 @@ boardElement.addEventListener('pointerup', (event) => {
 }, { passive: false });
 boardElement.addEventListener('pointercancel', () => { swipeStart = undefined; });
 
-window.addEventListener('ovolar-background', pause);
-window.addEventListener('blur', pause);
-document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+pauseWhenBackgrounded(pause);
 
 render();
 startTimer();

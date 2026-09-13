@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { createShuffledBag, type PieceKind } from './game/bag';
 import { findClockwiseRotation, type Matrix } from './game/rotation';
 import { TouchRepeater, type RepeatScheduler } from './game/touch-repeat';
+import { haptic } from './feedback';
 import './style.css';
 
 const BOARD_WIDTH = 10;
@@ -262,6 +263,7 @@ class OvolarBlockScene extends Phaser.Scene {
     this.state.level = Math.floor(this.state.lines / 10) + 1;
     this.dropInterval = Math.max(110, 750 - (this.state.level - 1) * 58);
     this.saveBest();
+    haptic('success');
     this.cameras.main.flash(110, 255, 221, 123, false);
     window.dispatchEvent(new CustomEvent<LineClearEvent>('ovolar-block-line-clear', { detail: { lines: cleared, points } }));
   }
